@@ -7,16 +7,16 @@
 
 
 //---------- fetch func
-int fetchOp(uint32_t*buf,FILE fp,int pc){
-  fseek(fp,pc,SEEK_SET);
+int fetchOp(uint32_t*buf,FILE*fp,int pc){
+  fseek(fp,(long)pc,SEEK_SET);
   //fseek(fp,(offset-1),SEEK_CUR);
-  int r = fread(buf,4,1,fp);
-  return r;
+  fread(buf,sizeof(uint32_t),1,fp);
+  return 0;
 }
 //---------- for decode
 uint32_t cutoutOp(uint32_t op, int h, int t){
-  //0..h..0ret0..31-t..0
-  return ((a<<h)>>(31-h-t));
+  //0..h..0ret0..31-t..0 , i.e. h~t bit in 0-index
+  return ((op<<h)>>(31-h-t));
 }
 int cutoffOp(uint32_t op,uint32_t*rgs, uint32_t opt, int n){
   int i;
@@ -24,48 +24,53 @@ int cutoffOp(uint32_t op,uint32_t*rgs, uint32_t opt, int n){
     rgs[i] = cutoutOp(op,7+ 4*i,10+ 4*i);
   }
   opt = cutoutOp(op,7+4*n,31);
+  return 0;
 }
 //---------- for exec
 int utoi(uint32_t u, int digit){
-  
-  return 0;
+  if(digit<2 || digit>32) { printf("error@utoi invalid input."); return -1; }
+  uint32_t s = cutoutOp(u,32-digit,31-digit);
+  int i = (int)(cutoutOp(u,33-digit,31));
+  if(s==1){ i=-i; }
+  return i;
 }
 
 //---------- main
-int main(int argc, char*argv){
+int main(int argc, char*argv[]){
   // open program file
   if(argc<2){
     printf("too few args.");
     return 1;
   }
-  FILE fp;
+  FILE *fp;
   if((fp=fopen(argv[1], "r")) == NULL){
     printf("err@opening %s",argv[1]);
     return 1;
   }
 
   // vars
-  uint32_t op;
+  uint32_t op=0;
   uint32_t opcode;
   uint32_t rgs[3];
-  uint32_t option;
+  uint32_t option=0;
   int nextPC=0;
   int imm=0;
   uint32_t irg[16]={}; // int register
   uint32_t frg[16]={}; // float register
-  // 
-  int temp1,temp2;
+  //
+  uint32_t tmp_u1,tmp_u2;
+  //int tmp1;//tmp2;
   // initialize
   irg[0]  = 0;             // 0 register
   irg[14] = INIT_MEM_ADDR; // sp
   irg[15] = INIT_PC;       // pc (ip)
 
   // main loop
-  while(true){
+  while(1){
     //---- fetch
-    fseek(fp,pc,SEEK_SET);
+    fseek(fp,(long)irg[15],SEEK_SET);
     //-- fseek(fp,(offset-1),SEEK_CUR);
-    fread(op,4,1,fp);
+    fread(&op,sizeof(uint32_t),1,fp);
 
     //---- decode & exec
     nextPC = irg[15] + 4;
@@ -113,7 +118,11 @@ int main(int argc, char*argv){
       irg[rgs[0]] = ~(irg[rgs[1]] | irg[rgs[2]]);
       break;
     case 0b0010000: //shift
-      cutoffOp(op,rgs,option,2);
+      cutoffOp(op,rgs,option,3);
+      imm = utoi(cutoutOp(op,19,23),6);
+      tmp_u1 = cutoutOp(op,24,24);
+      tmp_u2 = cutoutOp(op,25,26);
+      irg[rgs[0]] = irg[rgs[1]] << (irg[rgs[2]] + imm);
       break;
       //--- FLU
     case 0b0100000: //fadd
@@ -199,12 +208,15 @@ int main(int argc, char*argv){
       }
       break;
       //---- system
-    
+    case 0b1111110 : //testcode write
+      cutoffOp(op,rgs,option,1);
+      printf("rg%d = %d\n",rgs[0],irg[rgs[0]]);
+      break;
     default:
       break;
     }
-    //---- end
-
+    //---- end    
+    irg[15] = nextPC;
   }
  
   fclose(fp);
