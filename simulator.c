@@ -100,9 +100,18 @@ int main(int argc, char*argv[]){
   while(1){
     //---- fetch
     op = big_little(program[irg[15]/4]);
-    //printf("op:"); p_binary(op);
-    //printf("current PC: %d\n", irg[15]);
-
+    printf("op:"); p_binary(op);
+    printf("current PC: %d\n", irg[15]);
+    
+    if(op == 0x8001e000){ //end with halt. 
+      printf("irg[%d",irg[0]); // prints regs at the same time
+      for(i=1;i<16;i++){
+	printf(", %d",irg[i]);
+      }
+      printf("]\n");
+      break;
+    }
+      
     //---- decode & exec
     nextPC = irg[15] + 4;
     opcode = cutoutOp(op,0,6);
