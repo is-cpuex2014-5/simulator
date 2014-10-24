@@ -6,6 +6,11 @@
 #define MEM_SIZE  100000
 #define INIT_MEM_ADDR  0
 
+typedef union{
+  uint32_t u;
+  char ch[4];
+}endian;
+
 //---------- for decode
 uint32_t cutoutOp(uint32_t op, int h, int t){
   //0..h..0ret0..31-t..0 , i.e. h~t bit in 0-index
@@ -19,17 +24,18 @@ int cutoffOp(uint32_t op,uint32_t*rgs, uint32_t*opt, int n){
   *opt = cutoutOp(op,7+(4*n),31);
   return 0;
 }
+
 uint32_t big_little(uint32_t u){
-  uint32_t t,o=0;
-  int i,j;
-  for(i=0;i<4;i++){
-    t=0;
-    for(j=7;j>=0;j--){
-      t=(t<<1)|(cutoutOp(u,i*8+j,i*8+j));
-    }
-    o=(o<<8)|t;
-  }
-  return o;
+  endian e;
+  char temp;
+  e.u = u;
+  temp = e.ch[0];
+  e.ch[0] = e.ch[3];
+  e.ch[3] = temp;
+  temp = e.ch[1];
+  e.ch[1] = e.ch[2];
+  e.ch[2] = temp;
+  return e.u;
 }
 
 //---------- for exec
@@ -95,6 +101,7 @@ int main(int argc, char*argv[]){
     //---- fetch
     op = big_little(program[irg[15]/4]);
     //printf("op:"); p_binary(op);
+    //printf("current PC: %d\n", irg[15]);
 
     //---- decode & exec
     nextPC = irg[15] + 4;
