@@ -19,6 +19,18 @@ int cutoffOp(uint32_t op,uint32_t*rgs, uint32_t*opt, int n){
   *opt = cutoutOp(op,7+(4*n),31);
   return 0;
 }
+uint32_t big_little(uint32_t u){
+  uint32_t t,o=0;
+  int i,j;
+  for(i=0;i<4;i++){
+    t=0;
+    for(j=7;j>=0;j--){
+      t=(t<<1)|(cutoutOp(u,i*8+j,i*8+j));
+    }
+    o=(o<<8)|t;
+  }
+  return o;
+}
 
 //---------- for exec
 int utoi(uint32_t u, int digit){
@@ -28,17 +40,11 @@ int utoi(uint32_t u, int digit){
   }
   uint32_t s = cutoutOp(u,32-digit,32-digit);
   uint32_t i = cutoutOp(u,33-digit,31);
-  p_binary((~i)&0x00000fff);
-  p_binary(((~i)&0x00000fff)+1);
-  int r=0;
   if(s==1){
-    r -= (((~i)&0x00000fff)+1);
-    printf("%d\n",r);
+    return -(((~i)&0x00000fff)+1);
   } else {
-    r = i;
+    return i;
   }
-  
-  return r;
 }
 //---------- debug
 int p_binary(uint32_t b){
@@ -87,13 +93,13 @@ int main(int argc, char*argv[]){
   // main loop
   while(1){
     //---- fetch
-    op = program[irg[15]/4];
-    printf("op:"); p_binary(op);
+    op = big_little(program[irg[15]/4]);
+    //printf("op:"); p_binary(op);
 
     //---- decode & exec
     nextPC = irg[15] + 4;
     opcode = cutoutOp(op,0,6);
-    printf("opcode:"); p_binary(opcode);
+    //printf("opcode:"); p_binary(opcode);
 
     switch (opcode) {
       //--- ALU
@@ -193,11 +199,11 @@ int main(int argc, char*argv[]){
       break;
     case 0b1000010: //blt
       cutoffOp(op,rgs,&option,3);
-      printf("%d < %d ??\n",irg[rgs[0]],irg[rgs[1]]);
+      //printf("%d < %d ??\n",irg[rgs[0]],irg[rgs[1]]);
       if(irg[rgs[0]] < irg[rgs[1]]){
 	nextPC = irg[rgs[2]] + utoi(option,13);
       }
-      printf("next: %d\n",nextPC);
+      //printf("next: %d\n",nextPC);
       break;
     case 0b1000011: //blti
       cutoffOp(op,rgs,&option,2);
@@ -245,14 +251,18 @@ int main(int argc, char*argv[]){
       end = 1;
       break;
     case 0b1111010 : //testcode allwrite
-      for(i=0;i<16;i++){
-	printf("irg%d = %d\n",i,irg[i]);
+      printf("irg[%d",irg[0]);
+      for(i=1;i<16;i++){
+	printf(", %d",irg[i]);
       }
+      printf("]\n");
       break;
     case 0b1111011 : //testcode fallwrite
-      for(i=0;i<16;i++){
-	printf("frg%d = %d\n",i,frg[i]);
+      printf("irg[%d",irg[0]);
+      for(i=1;i<16;i++){
+	printf(", %d",irg[i]);
       }
+      printf("]\n");
       break;
     default:
       break;
