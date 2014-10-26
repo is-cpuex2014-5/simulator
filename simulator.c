@@ -6,7 +6,18 @@
 #define MEM_SIZE  100000
 #define INIT_MEM_ADDR  0
 
+#define HALT 0x8001e000
+
+<<<<<<< HEAD
 //-- cutout h~t bit in 0-index
+=======
+typedef union{
+  uint32_t u;
+  char ch[4];
+}endian;
+
+//---------- for decode
+>>>>>>> origin/sakas
 uint32_t cutoutOp(uint32_t op, int h, int t){
   return ((op<<h)>>(h+31-t));
 }
@@ -19,6 +30,7 @@ int cutoffOp(uint32_t op,uint32_t*rgs, uint32_t*opt, int n){
   *opt = cutoutOp(op,7+(4*n),31);
   return 0;
 }
+<<<<<<< HEAD
 uint32_t change_endian(uint32_t u){
   uint32_t t,o=0;
   int i,j;
@@ -28,6 +40,20 @@ uint32_t change_endian(uint32_t u){
     o=(o<<8)|t;
   }
   return o;
+=======
+
+uint32_t big_little(uint32_t u){
+  endian e;
+  char temp;
+  e.u = u;
+  temp = e.ch[0];
+  e.ch[0] = e.ch[3];
+  e.ch[3] = temp;
+  temp = e.ch[1];
+  e.ch[1] = e.ch[2];
+  e.ch[2] = temp;
+  return e.u;
+>>>>>>> origin/sakas
 }
 
 //-- uint -> int
@@ -95,6 +121,15 @@ int main(int argc, char*argv[]){
     //---- fetch
     op = change_endian(program[irg[15]/4]);
     //printf("op:"); p_binary(op,32);
+    //printf("current PC: %d\n", irg[15]);
+    if(op == 0x8001e000){ //end with halt. 
+      printf("irg[%d",irg[0]); // prints regs at the same time
+      for(i=1;i<16;i++){
+	printf(", %d",irg[i]);
+      }
+      printf("]\n");
+      break;
+    }
 
     //---- decode & exec
     nextPC = irg[15] + 4;
