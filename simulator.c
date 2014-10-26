@@ -7,13 +7,14 @@
 
 //#define HALT 0x8001e000
 
-//---------- for decode
+
 uint32_t cutoutOp(uint32_t op, int h, int t){
   //-- h~t bit in 0-index
   return ((op<<h)>>(h+31-t));
 }
-//-- opcode(7) | ri..(4n) | option(rest) -> _ | rgs[i] | opt
+
 int cutoffOp(uint32_t op,uint32_t*rgs, uint32_t*opt, int n){
+  //-- opcode(7) | ri..(4n) | option(rest) -> _ | rgs[i] | opt
   int i;
   for(i=0;i<n;i++){
     rgs[i] = cutoutOp(op,7+(4*i),10+(4*i));
@@ -27,6 +28,7 @@ typedef union{
   char ch[4];
 } endian;
 uint32_t change_endian(uint32_t u){
+  // big endian <-> little endian
   endian e;
   char temp;
   e.u = u;
@@ -39,8 +41,8 @@ uint32_t change_endian(uint32_t u){
   return e.u;
 }
 
-//-- uint -> int
 int utoi(uint32_t u, int digit){
+  //-- uint -> int
   if(digit<2 || digit>32) {
     printf("error@utoi invalid input.");
     return -1;
@@ -52,14 +54,51 @@ int utoi(uint32_t u, int digit){
     return   cutoutOp( u,33-digit,31);
   }
 }
-//-- print uint32_t in binary
+
 int p_binary(uint32_t b,int digit){
+  //-- print uint32_t in binary
   int i;
   for(i=digit-1;i>=0;i--){
     printf("%d", (b>>i) & 1);
   }
   printf("\n");
   return 0;
+}
+
+uint32_t shift_(uint32_t u, int lr, int ty, int b){
+  //0:l,1:r,  00:arith,01:logic,10:rotate
+  uint32_t tmp;
+  if(ty==0){
+    if(lr){  //arith-r
+      if(u&0x80000000){ // neg
+	return (u>>b)|0x80000000;
+      } else {
+	return u>>b;
+      }
+    } else { //arith-l
+      if(u&0x80000000){ // neg
+	return (u<<b)|0x80000000;
+      } else {
+	return u<<b;
+      }
+    }
+  } else if(ty==1){
+    if(lr){  //logic-r
+      return u>>b;
+    } else { //logic-l
+      return u<<b;
+    }
+  } else if(ty==2){
+    if(lr){  //rotate-r
+      tmp = cutoutOp(u,32-b,31);
+      tmp <<= 32-b;
+      return t1|(u>>b);
+    } else { //rotate-l
+      tmp = cutoutOp(u,0,b-1);
+      return tmp|(u<<b);
+    }
+  }
+  
 }
 
 //---------- main
@@ -84,7 +123,6 @@ int main(int argc, char*argv[]){
   uint32_t rgs[3];
   uint32_t option=0;
   int nextPC=0;
-  int imm=0;
   uint32_t irg[16]={}; // int register
   uint32_t frg[16]={}; // float register
   //
@@ -98,7 +136,11 @@ int main(int argc, char*argv[]){
   irg[0]  = 0;             // 0 register
   irg[14] = INIT_MEM_ADDR; // sp
   irg[15] = INIT_PC;       // pc (ip)
-  
+  // debug mode
+  if(0){
+    
+  }
+
   // main loop
   while(1){
     //---- fetch
@@ -153,17 +195,10 @@ int main(int argc, char*argv[]){
       break;
     case 0b0010000: //shift
       cutoffOp(op,rgs,&option,3);
-      imm = utoi(cutoutOp(op,19,23),6);
+      t1 = utoi(cutoutOp(op,19,23),6);
       ut1 = cutoutOp(op,24,24);
       ut2 = cutoutOp(op,25,26);
-      if(ut2==0){
-	
-      } else if(ut2==1){
-
-      } else if(ut2==3){
-
-      }
-      irg[rgs[0]] = irg[rgs[1]] << (irg[rgs[2]] + imm);
+      irg[rgs[0]] = shift_(irg[rgs[1]],ut1,ut2,irg[rgs[2]]+imm);
       break;
       //--- FLU
     case 0b0100000: //fadd
