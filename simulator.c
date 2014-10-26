@@ -1,27 +1,18 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define PROG_SIZE 100000
 #define INIT_PC        0
-#define MEM_SIZE  100000
-#define INIT_MEM_ADDR  0
+#define MEM_SIZE  300000
+#define INIT_MEM_ADDR (MEM_SIZE / 3)
 
-#define HALT 0x8001e000
-
-<<<<<<< HEAD
-//-- cutout h~t bit in 0-index
-=======
-typedef union{
-  uint32_t u;
-  char ch[4];
-}endian;
+//#define HALT 0x8001e000
 
 //---------- for decode
->>>>>>> origin/sakas
 uint32_t cutoutOp(uint32_t op, int h, int t){
+  //-- h~t bit in 0-index
   return ((op<<h)>>(h+31-t));
 }
-//-- cutoff op : opcode(7)|ri..(4*)|option(rest) each to *|rgs[i]|opt
+//-- opcode(7) | ri..(4n) | option(rest) -> _ | rgs[i] | opt
 int cutoffOp(uint32_t op,uint32_t*rgs, uint32_t*opt, int n){
   int i;
   for(i=0;i<n;i++){
@@ -30,19 +21,12 @@ int cutoffOp(uint32_t op,uint32_t*rgs, uint32_t*opt, int n){
   *opt = cutoutOp(op,7+(4*n),31);
   return 0;
 }
-<<<<<<< HEAD
-uint32_t change_endian(uint32_t u){
-  uint32_t t,o=0;
-  int i,j;
-  for(i=0;i<4;i++){
-    t=0;
-    for(j=7;j>=0;j--){ t=(t<<1)|(cutoutOp(u,i*8+j,i*8+j)); }
-    o=(o<<8)|t;
-  }
-  return o;
-=======
 
-uint32_t big_little(uint32_t u){
+typedef union{
+  uint32_t u;
+  char ch[4];
+} endian;
+uint32_t change_endian(uint32_t u){
   endian e;
   char temp;
   e.u = u;
@@ -53,7 +37,6 @@ uint32_t big_little(uint32_t u){
   e.ch[1] = e.ch[2];
   e.ch[2] = temp;
   return e.u;
->>>>>>> origin/sakas
 }
 
 //-- uint -> int
@@ -87,18 +70,17 @@ int main(int argc, char*argv[]){
     return 1;
   }
   FILE *fp;
-  uint32_t program[PROG_SIZE];
+  uint32_t memory[PROG_SIZE];
   int p_size;
   if((fp=fopen(argv[1], "rb")) == NULL){
     printf("err@opening %s",argv[1]);
     return 1;
   }
-  p_size = fread(program,sizeof(uint32_t),PROG_SIZE,fp);
+  p_size = fread(memory,sizeof(uint32_t),PROG_SIZE,fp);
 
 
   // vars
   uint32_t op=0;
-  uint32_t opcode;
   uint32_t rgs[3];
   uint32_t option=0;
   int nextPC=0;
@@ -107,10 +89,11 @@ int main(int argc, char*argv[]){
   uint32_t frg[16]={}; // float register
   //
   int isDebug=0;
+  int end=0;
   //
   int i;
-  int end=0;
-  uint32_t tmp_u1,tmp_u2;
+  int t1,t2;
+  uint32_t ut1,ut2;
   // initialize
   irg[0]  = 0;             // 0 register
   irg[14] = INIT_MEM_ADDR; // sp
@@ -119,26 +102,17 @@ int main(int argc, char*argv[]){
   // main loop
   while(1){
     //---- fetch
-    op = change_endian(program[irg[15]/4]);
-    //printf("op:"); p_binary(op,32);
-    //printf("current PC: %d\n", irg[15]);
-    if(op == 0x8001e000){ //end with halt. 
-      printf("irg[%d",irg[0]); // prints regs at the same time
-      for(i=1;i<16;i++){
-	printf(", %d",irg[i]);
-      }
-      printf("]\n");
-      break;
-    }
+    op = change_endian(memory[irg[15]/4]);
+
+    //-- end with halt(beq r0 r0 r15 0)
+    if(op == 0x8001e000){ end = 1; }
 
     //---- decode & exec
     nextPC = irg[15] + 4;
-    opcode = cutoutOp(op,0,6);
-
-    switch (opcode) {
+    switch (cutoutOp(op,0,6)) { //0-6:opcode
       //--- ALU
     case 0b0000000: //add
-      cutoffOp(op,rgs,&option,3); //n:rgs
+      cutoffOp(op,rgs,&option,3);
       irg[rgs[0]] = irg[rgs[1]] + irg[rgs[2]] + utoi(option,13);
       break;
     case 0b0000001: //addi
@@ -180,8 +154,15 @@ int main(int argc, char*argv[]){
     case 0b0010000: //shift
       cutoffOp(op,rgs,&option,3);
       imm = utoi(cutoutOp(op,19,23),6);
-      tmp_u1 = cutoutOp(op,24,24);
-      tmp_u2 = cutoutOp(op,25,26);
+      ut1 = cutoutOp(op,24,24);
+      ut2 = cutoutOp(op,25,26);
+      if(ut2==0){
+	
+      } else if(ut2==1){
+
+      } else if(ut2==3){
+
+      }
       irg[rgs[0]] = irg[rgs[1]] << (irg[rgs[2]] + imm);
       break;
       //--- FLU
@@ -270,6 +251,23 @@ int main(int argc, char*argv[]){
       }
       break;
       //---- system
+    case 0b1100000: //store
+      cutoffOp(op,rgs,&option,2);
+      irg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
+      break;
+    case 0b1100010: //load
+      cutoffOp(op,rgs,&option,2);
+      memory[irg[rgs[1]]+utoi(option,17)] = irg[rgs[0]];
+      break;
+    case 0b1100100: //fstore
+      cutoffOp(op,rgs,&option,2);
+      frg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
+      break;
+    case 0b1100110: //fload
+      cutoffOp(op,rgs,&option,2);
+      memory[irg[rgs[1]]+utoi(option,17)] = frg[rgs[0]];
+      break;
+      //---- gomi
     case 0b1111110 : //testcode write
       cutoffOp(op,rgs,&option,1);
       printf("irg%d = %d\n",rgs[0],irg[rgs[0]]);
@@ -277,12 +275,6 @@ int main(int argc, char*argv[]){
     case 0b1111111 : //testcode fwrite
       cutoffOp(op,rgs,&option,1);
       printf("frg%d = %d\n",rgs[0],frg[rgs[0]]);
-      break;
-    case 0b1111101 : //testcode end
-      end = 1;
-      break;
-    case 0b1111100 : //testcode end
-      end = 1;
       break;
     case 0b1111010 : //testcode allwrite
       printf("irg[%d",irg[0]);
