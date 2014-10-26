@@ -6,11 +6,11 @@
 #define MEM_SIZE  100000
 #define INIT_MEM_ADDR  0
 
-//---------- for decode
+//-- cutout h~t bit in 0-index
 uint32_t cutoutOp(uint32_t op, int h, int t){
-  //0..h..0ret0..31-t..0 , i.e. h~t bit in 0-index
   return ((op<<h)>>(h+31-t));
 }
+//-- cutoff op : opcode(7)|ri..(4*)|option(rest) each to *|rgs[i]|opt
 int cutoffOp(uint32_t op,uint32_t*rgs, uint32_t*opt, int n){
   int i;
   for(i=0;i<n;i++){
@@ -19,37 +19,34 @@ int cutoffOp(uint32_t op,uint32_t*rgs, uint32_t*opt, int n){
   *opt = cutoutOp(op,7+(4*n),31);
   return 0;
 }
-uint32_t big_little(uint32_t u){
+uint32_t change_endian(uint32_t u){
   uint32_t t,o=0;
   int i,j;
   for(i=0;i<4;i++){
     t=0;
-    for(j=7;j>=0;j--){
-      t=(t<<1)|(cutoutOp(u,i*8+j,i*8+j));
-    }
+    for(j=7;j>=0;j--){ t=(t<<1)|(cutoutOp(u,i*8+j,i*8+j)); }
     o=(o<<8)|t;
   }
   return o;
 }
 
-//---------- for exec
+//-- uint -> int
 int utoi(uint32_t u, int digit){
   if(digit<2 || digit>32) {
     printf("error@utoi invalid input.");
     return -1;
   }
-  uint32_t s = cutoutOp(u,32-digit,32-digit);
-  uint32_t i = cutoutOp(u,33-digit,31);
+  uint32_t s = (u>>(digit-1))&1;
   if(s==1){
-    return -(((~i)&0x00000fff)+1);
+    return -(cutoutOp(~u,33-digit,31)+1);
   } else {
-    return i;
+    return   cutoutOp( u,33-digit,31);
   }
 }
-//---------- debug
-int p_binary(uint32_t b){
+//-- print uint32_t in binary
+int p_binary(uint32_t b,int digit){
   int i;
-  for(i=31;i>=0;i--){
+  for(i=digit-1;i>=0;i--){
     printf("%d", (b>>i) & 1);
   }
   printf("\n");
@@ -64,13 +61,14 @@ int main(int argc, char*argv[]){
     return 1;
   }
   FILE *fp;
+  uint32_t program[PROG_SIZE];
+  int p_size;
   if((fp=fopen(argv[1], "rb")) == NULL){
     printf("err@opening %s",argv[1]);
     return 1;
   }
-  uint32_t program[PROG_SIZE];
-  int p_size;
   p_size = fread(program,sizeof(uint32_t),PROG_SIZE,fp);
+
 
   // vars
   uint32_t op=0;
@@ -81,6 +79,8 @@ int main(int argc, char*argv[]){
   int imm=0;
   uint32_t irg[16]={}; // int register
   uint32_t frg[16]={}; // float register
+  //
+  int isDebug=0;
   //
   int i;
   int end=0;
@@ -93,13 +93,12 @@ int main(int argc, char*argv[]){
   // main loop
   while(1){
     //---- fetch
-    op = big_little(program[irg[15]/4]);
-    //printf("op:"); p_binary(op);
+    op = change_endian(program[irg[15]/4]);
+    //printf("op:"); p_binary(op,32);
 
     //---- decode & exec
     nextPC = irg[15] + 4;
     opcode = cutoutOp(op,0,6);
-    //printf("opcode:"); p_binary(opcode);
 
     switch (opcode) {
       //--- ALU
@@ -258,7 +257,7 @@ int main(int argc, char*argv[]){
       printf("]\n");
       break;
     case 0b1111011 : //testcode fallwrite
-      printf("irg[%d",irg[0]);
+      printf("frg[%d",irg[0]);
       for(i=1;i<16;i++){
 	printf(", %d",irg[i]);
       }
@@ -267,11 +266,20 @@ int main(int argc, char*argv[]){
     default:
       break;
     }
+
     //---- end    
     irg[15] = nextPC;
     if(end){ break; }
   }
  
+  //
+  printf("irg[%d",irg[0]);
+  for(i=1;i<16;i++){ printf(", %d",irg[i]); }
+  printf("]\n");
+  printf("frg[%d",irg[0]);
+  for(i=1;i<16;i++){ printf(", %d",irg[i]); }
+  printf("]\n");
+  //
   fclose(fp);
   return 0;
 }
