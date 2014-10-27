@@ -286,6 +286,8 @@ int main(int argc, char*argv[]){
     case 0b1100000: //load
       cutoffOp(op,rgs,&option,2);
       irg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
+      if(rgs[0] == 15)
+	nextPC = memory[irg[rgs[1]]+utoi(option,17)];
       break;
     case 0b1100010: //store
       cutoffOp(op,rgs,&option,2);
