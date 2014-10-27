@@ -5,9 +5,14 @@
 1: make
 2: ./simulator [実行ファイル]
 
+・エンディアン変更に伴い既存のtestsは動かない
 
 
 更新履歴：
+10/27/15:30/make header
+関数群をヘッダファイルに分離
+どうなることやら
+
 10/27/14:00/some fixes
 store/loadを実装
 shiftを実装

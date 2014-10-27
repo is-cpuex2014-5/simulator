@@ -1,104 +1,12 @@
 #include <stdint.h>
 #include <stdio.h>
+#include "moromoro.h"
 
 #define MEM_SIZE  300000
 #define INIT_PC   0
 #define INIT_SP  (MEM_SIZE / 3)
 
 //#define HALT 0x8001e000
-
-uint32_t cutoutOp(uint32_t op, int h, int t){
-  //-- h~t bit in 0-index
-  return ((op<<h)>>(h+31-t));
-}
-
-int cutoffOp(uint32_t op,uint32_t*rgs, uint32_t*opt, int n){
-  //-- opcode(7) | ri..(4n) | option(rest) -> _ | rgs[i] | opt
-  int i;
-  for(i=0;i<n;i++){
-    rgs[i] = cutoutOp(op,7+(4*i),10+(4*i));
-  }
-  *opt = cutoutOp(op,7+(4*n),31);
-  return 0;
-}
-
-typedef union{
-  uint32_t u;
-  char ch[4];
-} endian;
-uint32_t change_endian(uint32_t u){
-  // big endian <-> little endian
-  endian e;
-  char temp;
-  e.u = u;
-  temp = e.ch[0];
-  e.ch[0] = e.ch[3];
-  e.ch[3] = temp;
-  temp = e.ch[1];
-  e.ch[1] = e.ch[2];
-  e.ch[2] = temp;
-  return e.u;
-}
-
-int utoi(uint32_t u, int digit){
-  //-- uint -> int
-  if(digit<2 || digit>32) {
-    printf("error@utoi invalid input.");
-    return -1;
-  }
-  uint32_t s = (u>>(digit-1))&1;
-  if(s==1){
-    return -(cutoutOp(~u,33-digit,31)+1);
-  } else {
-    return   cutoutOp( u,33-digit,31);
-  }
-}
-
-int p_binary(uint32_t b,int digit){
-  //-- print uint32_t in binary
-  int i;
-  for(i=digit-1;i>=0;i--){
-    printf("%d", (b>>i) & 1);
-  }
-  printf("\n");
-  return 0;
-}
-
-uint32_t shift_(uint32_t u, int lr, int ty, int b){
-  //0:l,1:r,  00:arith,01:logic,10:rotate
-  uint32_t tmp;
-  if(ty==0){
-    if(lr){  //arith-r
-      if(u&0x80000000){ // neg
-	return (u>>b)|0x80000000;
-      } else {
-	return u>>b;
-      }
-    } else { //arith-l
-      if(u&0x80000000){ // neg
-	return (u<<b)|0x80000000;
-      } else {
-	return u<<b;
-      }
-    }
-  } else if(ty==1){
-    if(lr){  //logic-r
-      return u>>b;
-    } else { //logic-l
-      return u<<b;
-    }
-  } else if(ty==2){
-    if(lr){  //rotate-r
-      tmp = cutoutOp(u,32-b,31);
-      tmp <<= 32-b;
-      return tmp|(u>>b);
-    } else { //rotate-l
-      tmp = cutoutOp(u,0,b-1);
-      return tmp|(u<<b);
-    }
-  }
-  return 0;
-}
 
 //---------- main
 int main(int argc, char*argv[]){
@@ -115,8 +23,8 @@ int main(int argc, char*argv[]){
     return 1;
   }
   p_size = fread(memory,sizeof(uint32_t),MEM_SIZE,fp);
-
-
+  
+  
   // vars
   uint32_t op=0;
   uint32_t rgs[3];
@@ -137,7 +45,7 @@ int main(int argc, char*argv[]){
   if(0){
     
   }
-
+  
   // main loop
   while(1){
     //---- fetch
@@ -145,7 +53,7 @@ int main(int argc, char*argv[]){
 
     //-- end with halt(beq r0 r0 r15 0)
     if(op == 0x8001e000){ end = 1; }
-
+    
     //---- decode & exec
     nextPC = irg[15] + 4;
     switch (cutoutOp(op,0,6)) { //0-6:opcode

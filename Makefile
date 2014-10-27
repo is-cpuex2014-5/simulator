@@ -1,20 +1,19 @@
 CC = gcc
 CFLAGS = -Wall -O2
 
-PROGRAM = simulator
-ARGS = simulator.o
+TARGET = simulator
+ARGS = moromoro
 
-.SUFFIXES = .c .o
+OBJS = ${ARGS:=.o} ${TARGET:=.o} 
+HEADS = ${ARGS:=.h}
 
-all: ${PROGRAM}
+all: ${TARGET}
 
-${PROGRAM}: ${ARGS}
+${TARGET}: ${OBJS} 
 	${CC} ${CFLAGS} -o $@ $^
-
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+${TARGET}: ${HEADS}
 
 clean:
-	rm ${PROGRAM} *.o
+	rm ${TARGET} *.o
 
 .PHONY: all clean
