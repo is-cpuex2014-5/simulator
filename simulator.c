@@ -283,19 +283,19 @@ int main(int argc, char*argv[]){
       }
       break;
       //---- system
-    case 0b1100000: //store
+    case 0b1100000: //load
       cutoffOp(op,rgs,&option,2);
       irg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
       break;
-    case 0b1100010: //load
+    case 0b1100010: //store
       cutoffOp(op,rgs,&option,2);
       memory[irg[rgs[1]]+utoi(option,17)] = irg[rgs[0]];
       break;
-    case 0b1100100: //fstore
+    case 0b1100100: //fload
       cutoffOp(op,rgs,&option,2);
       frg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
       break;
-    case 0b1100110: //fload
+    case 0b1100110: //store
       cutoffOp(op,rgs,&option,2);
       memory[irg[rgs[1]]+utoi(option,17)] = frg[rgs[0]];
       break;
