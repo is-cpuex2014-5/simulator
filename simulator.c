@@ -1,12 +1,17 @@
 #include <stdint.h>
 #include <stdio.h>
-#include "moromoro.h"
 
+#include "moromoro.h"
 #include "fpu_.h"
 
 #define MEM_SIZE  300000
 #define INIT_PC   0
 #define INIT_SP  (MEM_SIZE / 3)
+
+typedef union uintchar{
+  uint32_t u;
+  char ch[4];
+} uintchar;
 
 //#define HALT 0x8001e000
 
@@ -34,6 +39,7 @@ int main(int argc, char*argv[]){
   int nextPC=0;
   uint32_t irg[16]={}; // int register
   uint32_t frg[16]={}; // float register
+  uintchar uc;
   //
   int isDebug=0;
   int end=0;
@@ -211,13 +217,17 @@ int main(int argc, char*argv[]){
       cutoffOp(op,rgs,&option,2);
       memory[irg[rgs[1]]+utoi(option,17)] = frg[rgs[0]];
       break;
-      /*
-	case 0b: //read
-	cutoffOp(op,rgs,&option,1);
-	break;
-	case 0b: //write
-	break;
-       */
+    case 0b1110000: //read
+      cutoffOp(op,rgs,&option,1);
+      uc.u = irg[rgs[0]];
+      fread(&uc.ch[3], sizeof(char), 1, stdin);
+      irg[rgs[0]] = uc.u;
+      break;
+    case 0b1110001: //write
+      cutoffOp(op,rgs,&option,1);
+      uc.u = irg[rgs[0]];
+      fwrite(&uc.ch[3], sizeof(char), 1, stdout);
+      break;
       //---- gomi
     case 0b1111110 : //testcode write
       cutoffOp(op,rgs,&option,1);

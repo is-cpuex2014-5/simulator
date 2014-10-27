@@ -9,7 +9,11 @@
 
 
 更新履歴：
-10/17/18:00/moromoro
+10/28/01:00/readwrite
+read/write仮実装
+諸々増えていたgomi(branch関連)を消去
+
+10/27/18:00/moromoro
 fpu導入
 関数をheaderに分けた
 
