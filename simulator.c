@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include "moromoro.h"
 
+#include "fpu_.h"
+
+
 #define MEM_SIZE  300000
 #define INIT_PC   0
 #define INIT_SP  (MEM_SIZE / 3)
@@ -108,34 +111,36 @@ int main(int argc, char*argv[]){
       //--- FLU
     case 0b0100000: //fadd
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]] = frg[rgs[1]] + frg[rgs[2]];
+      frg[rgs[0]] = fadd(frg[rgs[1]], frg[rgs[2]]);
       break;
     case 0b0100010: //fsub
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]] = frg[rgs[1]] - frg[rgs[2]];
+      frg[rgs[0]] = fsub(frg[rgs[1]], frg[rgs[2]]);
       break;
     case 0b0100100: //fmul
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]] = frg[rgs[1]] * frg[rgs[2]];
+      //frg[rgs[0]] = fmul(frg[rgs[1]], frg[rgs[2]]);
       break;
-    case 0b0100110: //fdiv
+    case 0b0100110: //fdiv  //not yet
       cutoffOp(op,rgs,&option,3);
       frg[rgs[0]] = frg[rgs[1]] / frg[rgs[2]];
       break;
-    case 0b0101000: //fsqrt
+    case 0b0101000: //fsqrt //not yet
       cutoffOp(op,rgs,&option,2);
       break;
     case 0b0101010: //ftoi
       cutoffOp(op,rgs,&option,2);
+      irg[rgs[0]] = h_floor(frg[rgs[1]]);
       break;
     case 0b0101100: //itof
       cutoffOp(op,rgs,&option,2);
+      //frg[rgs[0]] = h_i2f(irg[rgs[1]]);
       break;
-    case 0b0101110: //fneg
+    case 0b0101110: //fneg  //not yet
       cutoffOp(op,rgs,&option,2);
       frg[rgs[0]] = -frg[rgs[1]];
       break;
-    case 0b0110000: //finv
+    case 0b0110000: //finv  //not yet
       cutoffOp(op,rgs,&option,2);
       frg[rgs[0]] = 1 / frg[rgs[1]];
       break;
@@ -154,11 +159,9 @@ int main(int argc, char*argv[]){
       break;
     case 0b1000010: //blt
       cutoffOp(op,rgs,&option,3);
-      //printf("%d < %d ??\n",irg[rgs[0]],irg[rgs[1]]);
       if(irg[rgs[0]] < irg[rgs[1]]){
 	nextPC = irg[rgs[2]] + utoi(option,13);
       }
-      //printf("next: %d\n",nextPC);
       break;
     case 0b1000011: //blti
       cutoffOp(op,rgs,&option,2);
@@ -191,19 +194,19 @@ int main(int argc, char*argv[]){
       }
       break;
       //---- system
-    case 0b1100000: //store
+    case 0b1100000: //load
       cutoffOp(op,rgs,&option,2);
       irg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
       break;
-    case 0b1100010: //load
+    case 0b1100010: //store
       cutoffOp(op,rgs,&option,2);
       memory[irg[rgs[1]]+utoi(option,17)] = irg[rgs[0]];
       break;
-    case 0b1100100: //fstore
+    case 0b1100100: //fload
       cutoffOp(op,rgs,&option,2);
       frg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
       break;
-    case 0b1100110: //fload
+    case 0b1100110: //fstore
       cutoffOp(op,rgs,&option,2);
       memory[irg[rgs[1]]+utoi(option,17)] = frg[rgs[0]];
       break;

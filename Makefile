@@ -2,15 +2,20 @@ CC = gcc
 CFLAGS = -Wall -O2
 
 TARGET = simulator
-ARGS = moromoro
+SRCS = moromoro
+ARGS = ${TARGET:=.c} ${SRCS:=.c} 
+OBJS = ${ARGS:.c=.o}
+HEADS = ${SRCS:=.h} fpu_.h
 
-OBJS = ${ARGS:=.o} ${TARGET:=.o} 
-HEADS = ${ARGS:=.h}
+FPUS = ../fpu/fadd ../fpu/fsub ../fpu/floor
+FPU_S = ${FPUS:=.c}
+FPU_O = ${FPUS:=.o}
 
 all: ${TARGET}
 
-${TARGET}: ${OBJS} 
+${TARGET}: ${OBJS} ${FPU_O}
 	${CC} ${CFLAGS} -o $@ $^
+
 ${TARGET}: ${HEADS}
 
 clean:

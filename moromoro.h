@@ -13,7 +13,7 @@ typedef union endian{
 
 uint32_t change_endian(uint32_t);
 int utoi(uint32_t, int);
-int p_binary(uint32_t,int);
+int p_binary(uint32_t, int);
 uint32_t shift_(uint32_t, int, int, int);
 
 #endif

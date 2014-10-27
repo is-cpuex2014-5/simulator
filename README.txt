@@ -9,9 +9,9 @@
 
 
 更新履歴：
-10/27/15:30/make header
-関数群をヘッダファイルに分離
-どうなることやら
+10/17/18:00/moromoro
+fpu導入
+関数をheaderに分けた
 
 10/27/14:00/some fixes
 store/loadを実装
