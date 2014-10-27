@@ -1,12 +1,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define INIT_PC        0
 #define MEM_SIZE  300000
-#define INIT_MEM_ADDR (MEM_SIZE / 3)
+#define INIT_PC   0
+#define INIT_SP  (MEM_SIZE / 3)
 
 //#define HALT 0x8001e000
-
 
 uint32_t cutoutOp(uint32_t op, int h, int t){
   //-- h~t bit in 0-index
@@ -92,13 +91,13 @@ uint32_t shift_(uint32_t u, int lr, int ty, int b){
     if(lr){  //rotate-r
       tmp = cutoutOp(u,32-b,31);
       tmp <<= 32-b;
-      return t1|(u>>b);
+      return tmp|(u>>b);
     } else { //rotate-l
       tmp = cutoutOp(u,0,b-1);
       return tmp|(u<<b);
     }
   }
-  
+  return 0;
 }
 
 //---------- main
@@ -109,13 +108,13 @@ int main(int argc, char*argv[]){
     return 1;
   }
   FILE *fp;
-  uint32_t memory[PROG_SIZE];
+  uint32_t memory[MEM_SIZE];
   int p_size;
   if((fp=fopen(argv[1], "rb")) == NULL){
     printf("err@opening %s",argv[1]);
     return 1;
   }
-  p_size = fread(memory,sizeof(uint32_t),PROG_SIZE,fp);
+  p_size = fread(memory,sizeof(uint32_t),MEM_SIZE,fp);
 
 
   // vars
@@ -130,12 +129,10 @@ int main(int argc, char*argv[]){
   int end=0;
   //
   int i;
-  int t1,t2;
-  uint32_t ut1,ut2;
   // initialize
-  irg[0]  = 0;             // 0 register
-  irg[14] = INIT_MEM_ADDR; // sp
-  irg[15] = INIT_PC;       // pc (ip)
+  irg[0]  = 0;       // 0 register
+  irg[14] = INIT_SP; // sp
+  irg[15] = INIT_PC; // pc (ip)
   // debug mode
   if(0){
     
@@ -195,10 +192,10 @@ int main(int argc, char*argv[]){
       break;
     case 0b0010000: //shift
       cutoffOp(op,rgs,&option,3);
-      t1 = utoi(cutoutOp(op,19,23),6);
-      ut1 = cutoutOp(op,24,24);
-      ut2 = cutoutOp(op,25,26);
-      irg[rgs[0]] = shift_(irg[rgs[1]],ut1,ut2,irg[rgs[2]]+imm);
+      irg[rgs[0]] = shift_(irg[rgs[1]],
+			   cutoutOp(op,24,24),
+			   cutoutOp(op,25,26),
+			   irg[rgs[2]]+utoi(cutoutOp(op,19,23),6));
       break;
       //--- FLU
     case 0b0100000: //fadd

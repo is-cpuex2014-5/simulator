@@ -10,7 +10,14 @@ Makefileはdir内の全.cファイルをコンパイルするクソだから気�
 
 
 更新履歴：
-10/22/2:40/~branch
+10/26/23:20/
+store/loadを実装
+shiftを実装
+
+10/24/14:10/endian fix
+エンディアン問題を解決
+
+10/22/02:40/~branch
 命令読み込み方式の変更
 ALUとBranchの動作確認
 loop版fibの動作確認
