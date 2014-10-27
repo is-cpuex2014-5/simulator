@@ -4,7 +4,6 @@
 
 #include "fpu_.h"
 
-
 #define MEM_SIZE  300000
 #define INIT_PC   0
 #define INIT_SP  (MEM_SIZE / 3)
