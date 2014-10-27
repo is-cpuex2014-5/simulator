@@ -5,20 +5,22 @@ TARGET = simulator
 SRCS = moromoro
 ARGS = ${TARGET:=.c} ${SRCS:=.c} 
 OBJS = ${ARGS:.c=.o}
-HEADS = ${SRCS:=.h} fpu_.h
+HEADS = ${SRCS:=.h}
 
-FPUS = ../fpu/fadd ../fpu/fsub ../fpu/floor
-FPU_S = ${FPUS:=.c}
+VPATH = ../fpu
+FPUS = fadd fsub floor float
 FPU_O = ${FPUS:=.o}
 
 all: ${TARGET}
 
 ${TARGET}: ${OBJS} ${FPU_O}
 	${CC} ${CFLAGS} -o $@ $^
-
 ${TARGET}: ${HEADS}
+
+${FPUS}: %: %.o %.h
+	 ${CC} ${CFLAGS} -o $@ $<
 
 clean:
 	rm ${TARGET} *.o
 
-.PHONY: all clean
+.PHONY: all clean fpus
