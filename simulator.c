@@ -207,6 +207,13 @@ int main(int argc, char*argv[]){
       cutoffOp(op,rgs,&option,2);
       memory[irg[rgs[1]]+utoi(option,17)] = frg[rgs[0]];
       break;
+      /*
+	case 0b: //read
+	cutoffOp(op,rgs,&option,1);
+	break;
+	case 0b: //write
+	break;
+       */
       //---- gomi
     case 0b1111110 : //testcode write
       cutoffOp(op,rgs,&option,1);
@@ -232,7 +239,7 @@ int main(int argc, char*argv[]){
       break;
     default:
       break;
-    }
+    } // --end switch
 
     //---- end    
     irg[15] = nextPC;
