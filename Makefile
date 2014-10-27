@@ -1,15 +1,20 @@
-
 CC = gcc
 CFLAGS = -Wall -O2
-SRCS := ${wildcard *.c}
-TARGET = ${SRCS:.c=}
 
-all: ${TARGET}
+PROGRAM = simulator
+ARGS = simulator.o
 
-${TARGET}: %: %.o
-	${CC} ${CFLAGS} -o $@ $<
+.SUFFIXES = .c .o
+
+all: ${PROGRAM}
+
+${PROGRAM}: ${ARGS}
+	${CC} ${CFLAGS} -o $@ $^
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm -f ${TARGET} *.o
+	rm ${PROGRAM} *.o
 
 .PHONY: all clean

@@ -5,14 +5,13 @@
 1: make
 2: ./simulator [実行ファイル]
 
-現状色々いらない出力をするよ
-Makefileはdir内の全.cファイルをコンパイルするクソだから気をつけてね
 
 
 更新履歴：
-10/26/23:20/
+10/27/14:00/some fixes
 store/loadを実装
 shiftを実装
+Makefileを変更
 
 10/24/14:10/endian fix
 エンディアン問題を解決
