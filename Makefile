@@ -8,7 +8,7 @@ OBJS = ${ARGS:.c=.o}
 HEADS = ${SRCS:=.h}
 
 VPATH = ../fpu
-FPUS = fadd fsub floor float
+FPUS = fadd fsub floor float fmul i2f
 FPU_O = ${FPUS:=.o}
 
 all: ${TARGET}

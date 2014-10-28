@@ -57,11 +57,14 @@ int p_binary(uint32_t b,int digit){
 //shift u b bits
 // 0:l,1:r,  00:arith,01:logic,10:rotate
 uint32_t shift_(uint32_t u, int lr, int ty, int b){
+  int i;
   uint32_t tmp;
   if(ty==0){
     if(lr){  //arith-r
       if(u&0x80000000){ // neg
-	return (u>>b)|0x80000000;
+	tmp = u;
+	for(i=0;i<b;i++){ tmp = (tmp>>1)|0x80000000; }
+	return tmp;
       } else {
 	return u>>b;
       }
