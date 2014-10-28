@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -O2
+CFLAGS = -std=c11 -Wall -Wextra -g -O2
 
 TARGET = simulator
 SRCS = moromoro
