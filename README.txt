@@ -5,9 +5,21 @@
 1: make
 2: ./simulator [実行ファイル]
 
+・エンディアン変更に伴い既存のtestsは動かない
 
 
 更新履歴：
+10/28/14:00/bugfix: b(f)lt
+branchまわりのバグ修正（ごめんなさい）
+
+10/28/01:00/readwrite
+read/write仮実装
+諸々増えていたgomi(branch関連：gitの)を消去
+
+10/27/18:00/moromoro
+fpu導入
+関数をheaderに分けた
+
 10/27/14:00/some fixes
 store/loadを実装
 shiftを実装
