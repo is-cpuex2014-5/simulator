@@ -247,14 +247,14 @@ int main(int argc, char*argv[]){
     case 0b1000010: //blt
       cutoffOp(op,rgs,&option,3);
       //printf("%d < %d ??\n",irg[rgs[0]],irg[rgs[1]]);
-      if(irg[rgs[0]] < irg[rgs[1]]){
+      if(utoi(irg[rgs[0]], 32) < utoi(irg[rgs[1]], 32)){
 	nextPC = irg[rgs[2]] + utoi(option,13);
       }
       //printf("next: %d\n",nextPC);
       break;
     case 0b1000011: //blti
       cutoffOp(op,rgs,&option,2);
-      if(irg[rgs[0]] < irg[rgs[1]]){
+      if(utoi(irg[rgs[0]], 32) < utoi(irg[rgs[1]], 32)){
 	nextPC = utoi(option,17);
       }
       break;
