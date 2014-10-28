@@ -93,3 +93,11 @@ uint32_t shift_(uint32_t u, int lr, int ty, int b){
   }
   return 0;
 }
+
+// return -:(a<b), 0:(a==b), +:(a>b);
+int compare_u(uint32_t a, uint32_t b){
+  int c,d;
+  if(a==0x80000000){ c=0; } else { c=a; }
+  if(b==0x80000000){ d=0; } else { d=b; }
+  return c-d;
+}
