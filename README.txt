@@ -9,9 +9,12 @@
 
 
 更新履歴：
+10/28/14:00/bugfix: b(f)lt
+branchまわりのバグ修正（ごめんなさい）
+
 10/28/01:00/readwrite
 read/write仮実装
-諸々増えていたgomi(branch関連)を消去
+諸々増えていたgomi(branch関連：gitの)を消去
 
 10/27/18:00/moromoro
 fpu導入
