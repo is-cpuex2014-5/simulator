@@ -164,13 +164,13 @@ int main(int argc, char*argv[]){
       break;
     case 0b1000010: //blt
       cutoffOp(op,rgs,&option,3);
-      if(compare_u(irg[rgs[0]], irg[rgs[1]]) < 0){
+      if(utoi(irg[rgs[0]],32) < utoi(irg[rgs[1]],32)){
 	nextPC = irg[rgs[2]] + utoi(option,13);
       }
       break;
     case 0b1000011: //blti
       cutoffOp(op,rgs,&option,2);
-      if(compare_u(irg[rgs[0]], irg[rgs[1]]) < 0){
+      if(utoi(irg[rgs[0]],32) < utoi(irg[rgs[1]],32)){
 	nextPC = utoi(option,17);
       }
       break;
@@ -188,13 +188,13 @@ int main(int argc, char*argv[]){
       break;
     case 0b1000110: //bflt
       cutoffOp(op,rgs,&option,3);
-      if(compare_u(frg[rgs[0]], frg[rgs[1]]) < 0){
+      if(utoi(irg[rgs[0]],32) < utoi(irg[rgs[1]],32)){
 	nextPC = irg[rgs[2]] + utoi(option,13);
       }
       break;
     case 0b1000111: //bflti
       cutoffOp(op,rgs,&option,2);
-      if(compare_u(frg[rgs[0]], frg[rgs[1]]) < 0){
+      if(utoi(irg[rgs[0]],32) < utoi(irg[rgs[1]],32)){
 	nextPC = utoi(option,17);
       }
       break;
