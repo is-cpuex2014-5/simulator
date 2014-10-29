@@ -53,6 +53,166 @@ int p_binary(uint32_t b,int digit){
   printf("\n");
   return 0;
 }
+//-- print opration in assembli
+int print_op(uint32_t op){
+  uint32_t rgs[3];
+  uint32_t option=0;
+  switch(cutoutOp(op,0,6)){
+      //--- ALU
+    case 0b0000000: //add
+      cutoffOp(op,rgs,&option,3);
+      printf("add r%d r%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+      break;
+    case 0b0000001: //addi
+      cutoffOp(op,rgs,&option,2);
+      printf("addi r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+      break;
+    case 0b0000010: //sub
+      cutoffOp(op,rgs,&option,3);
+      printf("sub r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]); 
+      break;
+    case 0b0000011: //subi
+      cutoffOp(op,rgs,&option,2);
+      printf("subi r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+      break;
+    case 0b0000100: //not
+      cutoffOp(op,rgs,&option,2);
+      printf("not r%d r%d\n",rgs[0],rgs[1]);
+      break;
+    case 0b0000110: //and
+      cutoffOp(op,rgs,&option,3);
+      printf("and r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+      break;
+    case 0b0001000: //or
+      cutoffOp(op,rgs,&option,3);
+      printf("or r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+      break;
+    case 0b0001010: //xor
+      cutoffOp(op,rgs,&option,3);
+      printf("xor r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+      break;
+    case 0b0001100: //nand
+      cutoffOp(op,rgs,&option,3);
+      printf("nand r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+      break;
+    case 0b0001110: //nor
+      cutoffOp(op,rgs,&option,3);
+      printf("nor r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+      break;
+    case 0b0010000: //shift //notyet
+      cutoffOp(op,rgs,&option,3);
+      printf("shift r%d r%d r%d %d",rgs[0],rgs[1],rgs[2],utoi(cutoutOp(op,19,23),6));
+      if(cutoutOp(op,24,24)){
+	printf(" r");
+      } else { printf(" l"); }
+      if(cutoutOp(op,25,26)==0){
+	printf("-arith\n");
+      } else if(cutoutOp(op,25,26)==1){
+	printf("-logic\n");
+      } else {
+	printf("-rotate\n");
+      }
+      break;
+      //--- FLU
+    case 0b0100000: //fadd
+      cutoffOp(op,rgs,&option,3);
+      printf("fadd f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
+      break;
+    case 0b0100010: //fsub
+      cutoffOp(op,rgs,&option,3);
+      printf("fsub f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
+      break;
+    case 0b0100100: //fmul
+      cutoffOp(op,rgs,&option,3);
+      printf("fmul f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
+      break;
+    case 0b0100110: //fdiv
+      cutoffOp(op,rgs,&option,3);
+      printf("fdiv f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
+      break;
+    case 0b0101000: //fsqrt
+      cutoffOp(op,rgs,&option,2);
+      printf("fsqrt f%d f%d\n",rgs[0],rgs[1]);
+      break;
+    case 0b0101010: //ftoi
+      cutoffOp(op,rgs,&option,2);
+      printf("ftoi r%d f%d\n",rgs[0],rgs[1]);
+      break;
+    case 0b0101100: //itof
+      cutoffOp(op,rgs,&option,2);
+      printf("itof f%d r%d\n",rgs[0],rgs[1]);
+      break;
+    case 0b0101110: //fneg
+      cutoffOp(op,rgs,&option,2);
+      printf("fadd f%d f%d\n",rgs[0],rgs[1]);
+      break;
+    case 0b0110000: //finv
+      cutoffOp(op,rgs,&option,2);
+      printf("finv f%d f%d\n",rgs[0],rgs[1]);
+      break;
+      //--- branch
+    case 0b1000000: //beq
+      cutoffOp(op,rgs,&option,3);
+      printf("beq r%d r%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+      break;
+    case 0b1000001: //beqi
+      cutoffOp(op,rgs,&option,2);
+      printf("beqi r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+      break;
+    case 0b1000010: //blt
+      cutoffOp(op,rgs,&option,3);
+      printf("blt r%d r%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+      break;
+    case 0b1000011: //blti
+      cutoffOp(op,rgs,&option,2);
+      printf("blti r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+      break;
+    case 0b1000100: //bfeq
+      cutoffOp(op,rgs,&option,3);
+      printf("bfeq f%d f%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+      break;
+    case 0b1000101: //bfeqi
+      cutoffOp(op,rgs,&option,2);
+      printf("bfeqi f%d f%d %d\n",rgs[0],rgs[1],utoi(option,17));
+      break;
+    case 0b1000110: //bflt
+      cutoffOp(op,rgs,&option,3);
+      printf("bflt f%d f%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+      break;
+    case 0b1000111: //bflti
+      cutoffOp(op,rgs,&option,2);
+      printf("bflti f%d f%d %d\n",rgs[0],rgs[1],utoi(option,17));
+      break;
+      //---- system
+    case 0b1100000: //load
+      cutoffOp(op,rgs,&option,2);
+      printf("load r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+      break;
+    case 0b1100010: //store
+      cutoffOp(op,rgs,&option,2);
+      printf("store r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+      break;
+    case 0b1100100: //fload
+      cutoffOp(op,rgs,&option,2);
+      printf("fload f%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+      break;
+    case 0b1100110: //fstore
+      cutoffOp(op,rgs,&option,2);
+      printf("fstore f%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+      break;
+    case 0b1110000: //read
+      cutoffOp(op,rgs,&option,1);
+      printf("read r%d\n",rgs[0]);
+      break;
+    case 0b1110001: //write
+      cutoffOp(op,rgs,&option,1);
+      printf("write r%d\n",rgs[0]);
+      break;
+    default:
+      printf("invalid opration??\n");
+      break;
+  }
+}
 
 //shift u b bits
 // 0:l,1:r,  00:arith,01:logic,10:rotate
@@ -93,3 +253,4 @@ uint32_t shift_(uint32_t u, int lr, int ty, int b){
   }
   return 0;
 }
+

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "moromoro.h"
 #include "fpu_.h"
@@ -23,7 +24,7 @@ int main(int argc, char*argv[]){
     return 1;
   }
   FILE *fp;
-  uint32_t memory[MEM_SIZE];
+  uint32_t memory[MEM_SIZE]={};
   int p_size;
   if((fp=fopen(argv[1], "rb")) == NULL){
     printf("err@opening %s",argv[1]);
@@ -40,24 +41,75 @@ int main(int argc, char*argv[]){
   uint32_t irg[16]={}; // int register
   uint32_t frg[16]={}; // float register
   uintchar uc;
-  //
-  int isDebug=0;
   int end=0;
+  //-- debug
+  int isDebug=-1;
+  char buf1[120];
+  char*buf2;
   //
   int i;
   // initialize
   irg[0]  = 0;       // 0 register
   irg[14] = INIT_SP; // sp
   irg[15] = INIT_PC; // pc (ip)
+
   // debug mode
-  if(0){
-    
+  if(!strcmp(argv[argc-1],"-d") ||
+     !strcmp(argv[argc-1],"--debug")){
+    printf("Debugmode. input command or -h for help.\n");
+    isDebug=0;
   }
   
   // main loop
   while(1){
     //---- fetch
     op = change_endian(memory[irg[15]/4]);
+
+    //---- debug
+    if(isDebug == 0){
+      printf("%03d: ",irg[15]);
+      //p_binary(op,32);
+      print_op(op);
+
+      fgets(buf1,100,stdin);
+      if(!strcmp(buf1,"\n")){ continue; }
+      buf2 = strtok(buf1," \n");
+      if(!strcmp(buf2,"-h")){
+	printf("---help---\n")
+	printf("-h       : show this.\n");
+	printf("print    : print regster.\n");
+	printf("step (n) : step n. with no arg, step 1.\n");
+	printf("break    : not yet. \n");	
+	printf("continue : end debug mode.\n");
+	printf("exit     : end simulator.\n");
+	continue;
+      } else if(!strcmp(buf2,"print")){
+	printf("irg[%d",irg[0]);
+	for(i=1;i<16;i++){ printf(", %d",irg[i]); }
+	printf("]\nfrg[%d",irg[0]);
+	for(i=1;i<16;i++){ printf(", %d",frg[i]); }
+	printf("]\n");
+	continue;
+      } else if(!strcmp(buf2,"step")){
+	buf2 = strtok(NULL," \n");
+	if(buf2==NULL){
+	  isDebug += 1;
+	} else {
+	  isDebug += atoi(buf2);
+	}
+      } else if(!strcmp(buf2,"break")){
+	continue;
+      } else if(!strcmp(buf2,"continue")){
+	printf("program continue..\n");	
+      } else if(!strcmp(buf2,"exit")){
+	printf("exit..\n");
+	break;
+      } else {
+	printf("invalid command.\n");
+	continue;
+      }
+    }
+    isDebug--;
 
     //-- end with halt(beq r0 r0 r15 0)
     if(op == 0x8001e000){ end = 1; }
@@ -124,7 +176,7 @@ int main(int argc, char*argv[]){
       break;
     case 0b0100100: //fmul
       cutoffOp(op,rgs,&option,3);
-      //frg[rgs[0]] = fmul(frg[rgs[1]], frg[rgs[2]]);
+      frg[rgs[0]] = fmul(frg[rgs[1]], frg[rgs[2]]);
       break;
     case 0b0100110: //fdiv  //not yet
       cutoffOp(op,rgs,&option,3);
@@ -139,7 +191,7 @@ int main(int argc, char*argv[]){
       break;
     case 0b0101100: //itof
       cutoffOp(op,rgs,&option,2);
-      //frg[rgs[0]] = h_i2f(irg[rgs[1]]);
+      frg[rgs[0]] = h_i2f(irg[rgs[1]]);
       break;
     case 0b0101110: //fneg  //not yet
       cutoffOp(op,rgs,&option,2);
@@ -202,8 +254,9 @@ int main(int argc, char*argv[]){
     case 0b1100000: //load
       cutoffOp(op,rgs,&option,2);
       irg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
-      if(rgs[0] == 15)
+      if(rgs[0]==15){
 	nextPC = memory[irg[rgs[1]]+utoi(option,17)];
+      }
       break;
     case 0b1100010: //store
       cutoffOp(op,rgs,&option,2);
@@ -228,30 +281,8 @@ int main(int argc, char*argv[]){
       uc.u = irg[rgs[0]];
       fwrite(&uc.ch[3], sizeof(char), 1, stdout);
       break;
-      //---- gomi
-    case 0b1111110 : //testcode write
-      cutoffOp(op,rgs,&option,1);
-      printf("irg%d = %d\n",rgs[0],irg[rgs[0]]);
-      break;
-    case 0b1111111 : //testcode fwrite
-      cutoffOp(op,rgs,&option,1);
-      printf("frg%d = %d\n",rgs[0],frg[rgs[0]]);
-      break;
-    case 0b1111010 : //testcode allwrite
-      printf("irg[%d",irg[0]);
-      for(i=1;i<16;i++){
-	printf(", %d",irg[i]);
-      }
-      printf("]\n");
-      break;
-    case 0b1111011 : //testcode fallwrite
-      printf("frg[%d",irg[0]);
-      for(i=1;i<16;i++){
-	printf(", %d",irg[i]);
-      }
-      printf("]\n");
-      break;
     default:
+      printf("invalid opration??\n");
       break;
     } // --end switch
 
@@ -263,9 +294,8 @@ int main(int argc, char*argv[]){
   //
   printf("irg[%d",irg[0]);
   for(i=1;i<16;i++){ printf(", %d",irg[i]); }
-  printf("]\n");
-  printf("frg[%d",irg[0]);
-  for(i=1;i<16;i++){ printf(", %d",irg[i]); }
+  printf("]\nfrg[%d",frg[0]);
+  for(i=1;i<16;i++){ printf(", %d",frg[i]); }
   printf("]\n");
   //
   fclose(fp);
