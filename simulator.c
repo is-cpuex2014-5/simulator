@@ -8,6 +8,7 @@
 #define MEM_SIZE  300000
 #define INIT_PC   0
 #define INIT_SP  (MEM_SIZE / 3)
+#define INIT_HP  (MEM_SIZE / 3 * 2)
 
 typedef union uintchar{
   uint32_t u;
@@ -26,11 +27,13 @@ int main(int argc, char*argv[]){
   FILE *fp;
   uint32_t memory[MEM_SIZE]={};
   int p_size;
+  int i;
   if((fp=fopen(argv[1], "rb")) == NULL){
     printf("err@opening %s",argv[1]);
     return 1;
   }
   p_size = fread(memory,sizeof(uint32_t),MEM_SIZE,fp);
+  for(i = 0; i<MEM_SIZE; i++) memory[i] = change_endian(memory[i]);
   
   
   // vars
@@ -47,9 +50,9 @@ int main(int argc, char*argv[]){
   char buf1[120];
   char*buf2;
   //
-  int i;
   // initialize
   irg[0]  = 0;       // 0 register
+  irg[13] = INIT_HP;
   irg[14] = INIT_SP; // sp
   irg[15] = INIT_PC; // pc (ip)
 
@@ -63,7 +66,7 @@ int main(int argc, char*argv[]){
   // main loop
   while(1){
     //---- fetch
-    op = change_endian(memory[irg[15]/4]);
+    op = memory[irg[15]/4];
 
     //---- debug
     if(isDebug == 0){
@@ -75,7 +78,7 @@ int main(int argc, char*argv[]){
       if(!strcmp(buf1,"\n")){ continue; }
       buf2 = strtok(buf1," \n");
       if(!strcmp(buf2,"-h")){
-	printf("---help---\n")
+	printf("---help---\n");
 	printf("-h       : show this.\n");
 	printf("print    : print regster.\n");
 	printf("step (n) : step n. with no arg, step 1.\n");
@@ -260,22 +263,22 @@ int main(int argc, char*argv[]){
       //---- system
     case 0b1100000: //load
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
+      irg[rgs[0]] = memory[(irg[rgs[1]]+utoi(option,17))/4];
       if(rgs[0]==15){
-	nextPC = memory[irg[rgs[1]]+utoi(option,17)];
+	nextPC = memory[(irg[rgs[1]]+utoi(option,17))/4];
       }
       break;
     case 0b1100010: //store
       cutoffOp(op,rgs,&option,2);
-      memory[irg[rgs[1]]+utoi(option,17)] = irg[rgs[0]];
+      memory[(irg[rgs[1]]+utoi(option,17))/4] = irg[rgs[0]];
       break;
     case 0b1100100: //fload
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
+      frg[rgs[0]] = memory[(irg[rgs[1]]+utoi(option,17))/4];
       break;
     case 0b1100110: //fstore
       cutoffOp(op,rgs,&option,2);
-      memory[irg[rgs[1]]+utoi(option,17)] = frg[rgs[0]];
+      memory[(irg[rgs[1]]+utoi(option,17))/4] = frg[rgs[0]];
       break;
     case 0b1110000: //read
       cutoffOp(op,rgs,&option,1);
