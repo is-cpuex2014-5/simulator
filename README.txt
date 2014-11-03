@@ -5,10 +5,18 @@
 1: make
 2: ./simulator [実行ファイル]
 
+・debug mode
+引数の最後に -d か --debug をつけるとデバッグモード
+コマンドはヘルプ参照
+
 ・エンディアン変更に伴い既存のtestsは動かない
 
 
 更新履歴：
+10/29/17:00/debuger01
+デバッグ機能追加（デバッグ中）
+step,print,continueくらいは動くっぽい。
+
 10/28/14:00/bugfix: b(f)lt
 branchまわりのバグ修正（ごめんなさい）
 
