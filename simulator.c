@@ -163,7 +163,14 @@ int main(int argc, char*argv[]){
       irg[rgs[0]] = shift_(irg[rgs[1]],
 			   cutoutOp(op,24,24),
 			   cutoutOp(op,25,26),
-			   irg[rgs[2]]+utoi(cutoutOp(op,19,23),6));
+			   irg[rgs[2]]);
+      break;
+    case 0b0010001: //shifti
+      cutoffOp(op,rgs,&option,3);
+      irg[rgs[0]] = shift_(irg[rgs[1]],
+			   cutoutOp(op,24,24),
+			   cutoutOp(op,25,26),
+			   utoi(cutoutOp(op,19,23),6));
       break;
       //--- FLU
     case 0b0100000: //fadd
