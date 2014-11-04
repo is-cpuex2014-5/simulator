@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "moromoro.h"
-#include "fpu_.h"
+//??  #include "fpu_.h"
 
 #define MEM_SIZE  300000 // actually how much?
 #define INIT_PC   0
@@ -42,28 +42,33 @@ int main(int argc, char*argv[]){
   uint32_t frg[16]={}; // float register
   uintchar uc;
   int end=0;
+
   //-- debug
   int isDebug=-1;
-  int if_print_op=1;
+  int ifPrintOp=1;
   int breakpoints[10]={};
-  int break_flg=0;
+  int breakflg=0;
   char buf1[120];
   char*buf2;
   //-- count used ops
   int countop[]={};
+
   //
   int i,tmp;
   uint32_t utmp;
+
   // initialize
   irg[0]  = 0;       // 0 register
   irg[14] = INIT_SP; // sp
   irg[15] = INIT_PC; // pc (ip)
 
   // debug mode
-  if(!strcmp(argv[argc-1],"-d") ||
-     !strcmp(argv[argc-1],"--debug")){
-    printf("Debugmode. input command or -h for help.\n");
-    isDebug=0;
+  for(i=0;i<argc;i++){
+    if(!strcmp(argv[argc-1],"-d") ||
+       !strcmp(argv[argc-1],"--debug")){
+      printf("Debugmode. input command or -h for help.\n");
+      isDebug=0; break;
+    }
   }
   
   // main loop
@@ -72,21 +77,21 @@ int main(int argc, char*argv[]){
     op = change_endian(memory[irg[15]/4]);
 
     //---- debug
-    break_flg=0;
+    breakflg=0;
     for(i=0;i<10;i++){
       if(breakpoints[i]!=0 && irg[15]==breakpoints[i]){
-	break_flg=1; break;
+	breakflg=1; break;
       }
     }
-    if(isDebug==0 || break_flg){
-      if(if_print_op){
+    if(!isDebug || breakflg){
+      if(ifPrintOp){
 	printf("%05d: ",irg[15]);
 	//p_binary(op,32);
 	print_op(op);
-      } if_print_op = 1;
+      } ifPrintOp = 1;
 
       fgets(buf1,100,stdin);
-      if(!strcmp(buf1,"\n")){ if_print_op = 0; isDebug = 0; continue; }
+      if(!strcmp(buf1,"\n")){ ifPrintOp = 0; isDebug = 0; continue; }
       buf2 = strtok(buf1," \n");
       if(!strcmp(buf2,"-h")){
 	printf("---help---\n");
@@ -99,7 +104,7 @@ int main(int argc, char*argv[]){
         printf("delete n  : delete nth breakpoint.\n");
 	printf("continue  : end debug mode.\n");
 	printf("exit      : end simulator.\n");
-	if_print_op = 0; isDebug = 0;
+	ifPrintOp = 0; isDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"print")){
 	buf2 = strtok(NULL," \n");
@@ -120,7 +125,7 @@ int main(int argc, char*argv[]){
 	} else {
 	  //printf("print what?\n");
 	}
-	if_print_op = 0; isDebug = 0;
+	ifPrintOp = 0; isDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"list")){
 	buf2 = strtok(NULL," \n");
@@ -130,7 +135,7 @@ int main(int argc, char*argv[]){
 	  printf("%05d: ",i);
 	  print_op(change_endian(memory[i/4]));
 	}
-	if_print_op = 0; isDebug = 0;
+	ifPrintOp = 0; isDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"step")){
 	buf2 = strtok(NULL," \n");
@@ -147,7 +152,7 @@ int main(int argc, char*argv[]){
 	  add_array(breakpoints, tmp, 10);
 	  printf("set breakpoint: %d\n",tmp);
 	} else { printf("invalid.\n"); }
-	if_print_op = 0; isDebug = 0;
+	ifPrintOp = 0; isDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"delete")){
 	buf2 = strtok(NULL," \n");
@@ -155,7 +160,7 @@ int main(int argc, char*argv[]){
 	  del_array(breakpoints, tmp);
 	  printf("delete breakpoint: %d\n",tmp);
 	} else { printf("invalid.\n"); }
-	if_print_op = 0; isDebug = 0;
+	ifPrintOp = 0; isDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"continue")){
 	printf("program continue.\n");	
@@ -163,7 +168,7 @@ int main(int argc, char*argv[]){
 	break;
       } else {
 	printf("invalid command.\n");
-	if_print_op = 0; isDebug = 0;
+	ifPrintOp = 0; isDebug = 0;
 	continue;
       }
     }
