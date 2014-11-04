@@ -53,6 +53,7 @@ int p_binary(uint32_t b,int digit){
   printf("\n");
   return 0;
 }
+
 //-- print opration in assembli
 void print_op(uint32_t op){
   uint32_t rgs[3];
@@ -99,9 +100,23 @@ void print_op(uint32_t op){
     cutoffOp(op,rgs,&option,3);
     printf("nor r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
     break;
-  case 0b0010000: //shift //notyet
+  case 0b0010000: //shift
     cutoffOp(op,rgs,&option,3);
-    printf("shift r%d r%d r%d %d",rgs[0],rgs[1],rgs[2],utoi(cutoutOp(op,19,23),6));
+    printf("shift r%d r%d r%d",rgs[0],rgs[1],rgs[2]);
+    if(cutoutOp(op,24,24)){
+      printf(" r");
+    } else { printf(" l"); }
+    if(cutoutOp(op,25,26)==0){
+      printf("-arith\n");
+    } else if(cutoutOp(op,25,26)==1){
+      printf("-logic\n");
+    } else {
+      printf("-rotate\n");
+    }
+    break;
+  case 0b0010001: //shifti
+    cutoffOp(op,rgs,&option,3);
+    printf("shifti r%d r%d %d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6));
     if(cutoutOp(op,24,24)){
       printf(" r");
     } else { printf(" l"); }
@@ -258,6 +273,7 @@ uint32_t shift_(uint32_t u, int lr, int ty, int b){
 int max(int a, int b){ return a>b?a:b; }
 int min(int a, int b){ return a<b?a:b; }
 
+// for debugger
 int add_array(int*ar, int b, int ln){
   int i,flg=0;
   for(i=0;i<ln;i++){
@@ -285,3 +301,63 @@ void show_array(int*ar, int ln){
   }
   return;
 }
+// for debugger ----
+
+//---- for op counter
+void print_countOp(int*count){
+  int flg=1,mid,i;
+  while(flg){
+    mid=0;
+    for(i=0;i<128;i++){
+      mid = count[mid]>count[i] ? mid : i;   
+    }
+    if(count[mid]>0){
+      switch (mid){
+      case 0b0000000: printf("add    :"); break;
+      case 0b0000001: printf("addi   :"); break;
+      case 0b0000010: printf("sub    :"); break;
+      case 0b0000011: printf("subi   :"); break;
+      case 0b0000100: printf("not    :"); break;
+      case 0b0000110: printf("and    :"); break;
+      case 0b0001000: printf("or     :"); break;
+      case 0b0001010: printf("xor    :"); break;
+      case 0b0001100: printf("nand   :"); break;
+      case 0b0001110: printf("nor    :"); break;
+      case 0b0010000: printf("shift  :"); break;
+      case 0b0010001: printf("shifti :"); break;
+      case 0b0100000: printf("fadd   :"); break;
+      case 0b0100010: printf("fsub   :"); break;
+      case 0b0100100: printf("fmul   :"); break;
+      case 0b0100110: printf("fdiv   :"); break;
+      case 0b0101000: printf("fsqrt  :"); break;
+      case 0b0101010: printf("ftoi   :"); break;
+      case 0b0101100: printf("itof   :"); break;
+      case 0b0101110: printf("fneg   :"); break;
+      case 0b0110000: printf("finv   :"); break;
+      case 0b1000000: printf("beq    :"); break;
+      case 0b1000001: printf("beqi   :"); break;
+      case 0b1000010: printf("blt    :"); break;
+      case 0b1000011: printf("blti   :"); break;
+      case 0b1000100: printf("bfeq   :"); break;
+      case 0b1000101: printf("bfeqi  :"); break;
+      case 0b1000110: printf("bflt   :"); break;
+      case 0b1000111: printf("bflti  :"); break;
+      case 0b1100000: printf("load   :"); break;
+      case 0b1100010: printf("store  :"); break;
+      case 0b1100100: printf("fload  :"); break;
+      case 0b1100110: printf("fstore :"); break;
+      case 0b1110000: printf("read   :"); break;
+      case 0b1110001: printf("write  :"); break;
+      default:        printf("??     :"); break;
+      }
+      printf(" %d times.\n",count[mid]);
+      count[mid] = 0;
+    } else {
+      flg = 0;
+    }
+  }
+
+  return;
+}
+
+//for op counter ----

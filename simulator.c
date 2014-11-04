@@ -44,14 +44,19 @@ int main(int argc, char*argv[]){
   int end=0;
 
   //-- debug
-  int isDebug=-1;
+  int ifDebug=-1;
   int ifPrintOp=1;
   int breakpoints[10]={};
   int breakflg=0;
   char buf1[120];
   char*buf2;
+
   //-- count used ops
-  int countop[]={};
+  int usedOpCounter[128]={};
+  int execCounter=0;
+
+  //-- print mode
+  int ifPrintMode=0;
 
   //
   int i,tmp;
@@ -62,14 +67,18 @@ int main(int argc, char*argv[]){
   irg[14] = INIT_SP; // sp
   irg[15] = INIT_PC; // pc (ip)
 
-  // debug mode
+  // option check
   for(i=0;i<argc;i++){
-    if(!strcmp(argv[argc-1],"-d") ||
-       !strcmp(argv[argc-1],"--debug")){
+    // debugger
+    if(!strcmp(argv[i],"-d") ||
+       !strcmp(argv[i],"--debug")){
       printf("Debugmode. input command or -h for help.\n");
-      isDebug=0; break;
+      ifDebug=0;
+    } else if(!strcmp(argv[i],"-p")){
+      ifPrintMode=1;
     }
   }
+
   
   // main loop
   while(1){
@@ -83,7 +92,7 @@ int main(int argc, char*argv[]){
 	breakflg=1; break;
       }
     }
-    if(!isDebug || breakflg){
+    if(!ifDebug || breakflg){
       if(ifPrintOp){
 	printf("%05d: ",irg[15]);
 	//p_binary(op,32);
@@ -91,7 +100,7 @@ int main(int argc, char*argv[]){
       } ifPrintOp = 1;
 
       fgets(buf1,100,stdin);
-      if(!strcmp(buf1,"\n")){ ifPrintOp = 0; isDebug = 0; continue; }
+      if(!strcmp(buf1,"\n")){ ifPrintOp = 0; ifDebug = 0; continue; }
       buf2 = strtok(buf1," \n");
       if(!strcmp(buf2,"-h")){
 	printf("---help---\n");
@@ -104,7 +113,7 @@ int main(int argc, char*argv[]){
         printf("delete n  : delete nth breakpoint.\n");
 	printf("continue  : end debug mode.\n");
 	printf("exit      : end simulator.\n");
-	ifPrintOp = 0; isDebug = 0;
+	ifPrintOp = 0; ifDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"print")){
 	buf2 = strtok(NULL," \n");
@@ -125,7 +134,7 @@ int main(int argc, char*argv[]){
 	} else {
 	  //printf("print what?\n");
 	}
-	ifPrintOp = 0; isDebug = 0;
+	ifPrintOp = 0; ifDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"list")){
 	buf2 = strtok(NULL," \n");
@@ -135,16 +144,16 @@ int main(int argc, char*argv[]){
 	  printf("%05d: ",i);
 	  print_op(change_endian(memory[i/4]));
 	}
-	ifPrintOp = 0; isDebug = 0;
+	ifPrintOp = 0; ifDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"step")){
 	buf2 = strtok(NULL," \n");
 	if(buf2==NULL){
-	  isDebug = 1;
+	  ifDebug = 1;
 	} else {
 	  tmp = atoi(buf2);
-	  if(tmp>0){ isDebug = atoi(buf2); }
-	  else { isDebug = 1; }
+	  if(tmp>0){ ifDebug = atoi(buf2); }
+	  else { ifDebug = 1; }
 	}
       } else if(!strcmp(buf2,"break")){
 	buf2 = strtok(NULL," \n");
@@ -152,7 +161,7 @@ int main(int argc, char*argv[]){
 	  add_array(breakpoints, tmp, 10);
 	  printf("set breakpoint: %d\n",tmp);
 	} else { printf("invalid.\n"); }
-	ifPrintOp = 0; isDebug = 0;
+	ifPrintOp = 0; ifDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"delete")){
 	buf2 = strtok(NULL," \n");
@@ -160,7 +169,7 @@ int main(int argc, char*argv[]){
 	  del_array(breakpoints, tmp);
 	  printf("delete breakpoint: %d\n",tmp);
 	} else { printf("invalid.\n"); }
-	ifPrintOp = 0; isDebug = 0;
+	ifPrintOp = 0; ifDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"continue")){
 	printf("program continue.\n");	
@@ -168,17 +177,21 @@ int main(int argc, char*argv[]){
 	break;
       } else {
 	printf("invalid command.\n");
-	ifPrintOp = 0; isDebug = 0;
+	ifPrintOp = 0; ifDebug = 0;
 	continue;
       }
     }
-    if(isDebug>=0){ isDebug--; }
+    if(ifDebug>=0){ ifDebug--; }
     //debug ----
 
 
     //-- end with halt(beq r0 r0 r15 0)
     if(op == 0x8001e000){ end = 1; }
     
+    //---- countOp
+    usedOpCounter[cutoutOp(op,0,6)]++;
+    execCounter++;
+
     //---- decode & exec
     nextPC = irg[15] + 4;
     switch (cutoutOp(op,0,6)) { //0-6:opcode
@@ -358,12 +371,20 @@ int main(int argc, char*argv[]){
     if(end){ break; }
   }
  
-  //
-  printf("irg[%d",irg[0]);
-  for(i=1;i<16;i++){ printf(", %d",irg[i]); }
-  printf("]\nfrg[%d",frg[0]);
-  for(i=1;i<16;i++){ printf(", %d",frg[i]); }
-  printf("]\n");
+  // print mode
+  if(ifPrintMode){
+    printf("program end.\n");
+
+    printf("irg[%d",irg[0]);
+    for(i=1;i<16;i++){ printf(", %d",irg[i]); }
+    printf("]\nfrg[%d",frg[0]);
+    for(i=1;i<16;i++){ printf(", %d",frg[i]); }
+    printf("]\n");
+    
+    printf("%d oprations\n",execCounter);
+    print_countOp(usedOpCounter);
+  }
+  
   //
   fclose(fp);
   return 0;
