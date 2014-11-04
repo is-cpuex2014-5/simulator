@@ -13,6 +13,11 @@
 
 
 更新履歴：
+11/4/11:00/debuger02
+デバッガ機能追加
+  printにoption([i,f, ]rg, op)追加
+  listを追加
+
 10/29/17:00/debuger01
 デバッグ機能追加（デバッグ中）
 step,print,continueくらいは動くっぽい。

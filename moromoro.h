@@ -17,4 +17,7 @@ int p_binary(uint32_t, int);
 int print_op(uint32_t);
 uint32_t shift_(uint32_t, int, int, int);
 
+int max(int, int);
+int min(int, int);
+
 #endif

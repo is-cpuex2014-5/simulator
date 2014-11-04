@@ -5,7 +5,7 @@
 #include "moromoro.h"
 #include "fpu_.h"
 
-#define MEM_SIZE  300000
+#define MEM_SIZE  300000 // actually how much?
 #define INIT_PC   0
 #define INIT_SP  (MEM_SIZE / 3)
 
@@ -44,10 +44,14 @@ int main(int argc, char*argv[]){
   int end=0;
   //-- debug
   int isDebug=-1;
+  int if_print_op=1;
   char buf1[120];
   char*buf2;
+  //-- count used ops
+  int countop[]={};
   //
-  int i;
+  int i,tmp;
+  uint32_t utmp;
   // initialize
   irg[0]  = 0;       // 0 register
   irg[14] = INIT_SP; // sp
@@ -67,49 +71,78 @@ int main(int argc, char*argv[]){
 
     //---- debug
     if(isDebug == 0){
-      printf("%03d: ",irg[15]);
-      //p_binary(op,32);
-      print_op(op);
+      if(if_print_op){
+	printf("%05d: ",irg[15]);
+	//p_binary(op,32);
+	print_op(op);
+      } if_print_op = 1;
 
       fgets(buf1,100,stdin);
       if(!strcmp(buf1,"\n")){ continue; }
       buf2 = strtok(buf1," \n");
       if(!strcmp(buf2,"-h")){
-	printf("---help---\n")
+	printf("---help---\n");
 	printf("-h       : show this.\n");
 	printf("print    : print regster.\n");
-	printf("step (n) : step n. with no arg, step 1.\n");
-	printf("break    : not yet. \n");	
+     	printf("  option : rg, irg, frg, op.\n");
+	printf("list (n) : show surrounding +-n ops (default&min 5).\n");
+	printf("step (n) : step n (default 1).\n");
+	printf("break    : not yet. \n");
 	printf("continue : end debug mode.\n");
 	printf("exit     : end simulator.\n");
+	if_print_op = 0;
 	continue;
       } else if(!strcmp(buf2,"print")){
-	printf("irg[%d",irg[0]);
-	for(i=1;i<16;i++){ printf(", %d",irg[i]); }
-	printf("]\nfrg[%d",irg[0]);
-	for(i=1;i<16;i++){ printf(", %d",frg[i]); }
-	printf("]\n");
+	buf2 = strtok(NULL," \n");
+	if(buf2==NULL || !strcmp(buf2,"rg")){
+	  printf("irg[%d",irg[0]);
+	  for(i=1;i<16;i++){ printf(", %d",irg[i]); }
+	  printf("]\nfrg[%d",frg[0]);
+	  for(i=1;i<16;i++){ printf(", %d",frg[i]); }
+	  printf("]\n");
+	} else if(!strcmp(buf2,"irg")) {
+	  printf("irg[%d",irg[0]); for(i=1;i<16;i++){ printf(", %d",irg[i]); } printf("]\n");
+	} else if(!strcmp(buf2,"frg")) {
+	  printf("frg[%d",frg[0]); for(i=1;i<16;i++){ printf(", %d",frg[i]); } printf("]\n");
+	} else if(!strcmp(buf2,"op")) {
+	  printf("%05d: ",irg[15]); print_op(op);
+	} else {
+	  //printf("print what?\n");
+	}
+	if_print_op = 0;
+	continue;
+      } else if(!strcmp(buf2,"list")){
+	buf2 = strtok(NULL," \n");
+	if(buf2==NULL){ tmp=5; }
+	else { tmp = max(5,atoi(buf2)); }
+	for(i=max(INIT_PC,irg[15]-tmp*4);i<=min(INIT_SP,irg[15]+tmp*4);i+=4){
+	  printf("%05d: ",i);
+	  print_op(change_endian(memory[i/4]));
+	}
+	if_print_op = 0;
 	continue;
       } else if(!strcmp(buf2,"step")){
 	buf2 = strtok(NULL," \n");
 	if(buf2==NULL){
 	  isDebug += 1;
 	} else {
-	  isDebug += atoi(buf2);
+	  tmp = atoi(buf2);
+	  if(tmp>0){ isDebug += atoi(buf2); }
+	  else { isDebug+=1; }
 	}
       } else if(!strcmp(buf2,"break")){
 	continue;
       } else if(!strcmp(buf2,"continue")){
-	printf("program continue..\n");	
+	printf("program continue.\n");	
       } else if(!strcmp(buf2,"exit")){
-	printf("exit..\n");
 	break;
       } else {
 	printf("invalid command.\n");
 	continue;
       }
     }
-    isDebug--;
+    if(isDebug>=0){ isDebug--; }
+    //debug ----
 
     //-- end with halt(beq r0 r0 r15 0)
     if(op == 0x8001e000){ end = 1; }
@@ -160,17 +193,11 @@ int main(int argc, char*argv[]){
       break;
     case 0b0010000: //shift
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]] = shift_(irg[rgs[1]],
-			   cutoutOp(op,24,24),
-			   cutoutOp(op,25,26),
-			   irg[rgs[2]]);
+      irg[rgs[0]] = shift_(irg[rgs[1]], cutoutOp(op,24,24), cutoutOp(op,25,26), irg[rgs[2]]);
       break;
     case 0b0010001: //shifti
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]] = shift_(irg[rgs[1]],
-			   cutoutOp(op,24,24),
-			   cutoutOp(op,25,26),
-			   utoi(cutoutOp(op,19,23),6));
+      irg[rgs[0]] = shift_(irg[rgs[1]], cutoutOp(op,24,24), cutoutOp(op,25,26), utoi(cutoutOp(op,19,23),6));
       break;
       //--- FLU
     case 0b0100000: //fadd
@@ -247,6 +274,7 @@ int main(int argc, char*argv[]){
       break;
     case 0b1000110: //bflt
       cutoffOp(op,rgs,&option,3);
+      // bug @ NAN,-0 ?
       if(utoi(irg[rgs[0]],32) < utoi(irg[rgs[1]],32)){
 	nextPC = irg[rgs[2]] + utoi(option,13);
       }

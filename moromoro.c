@@ -209,7 +209,7 @@ int print_op(uint32_t op){
       printf("write r%d\n",rgs[0]);
       break;
     default:
-      printf("invalid opration??\n");
+      printf("invalid opration.\n");
       break;
   }
 }
@@ -254,3 +254,5 @@ uint32_t shift_(uint32_t u, int lr, int ty, int b){
   return 0;
 }
 
+int max(int a, int b){ return a>b?a:b; }
+int min(int a, int b){ return a<b?a:b; }
