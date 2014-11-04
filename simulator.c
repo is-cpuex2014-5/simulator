@@ -45,6 +45,8 @@ int main(int argc, char*argv[]){
   //-- debug
   int isDebug=-1;
   int if_print_op=1;
+  int breakpoints[10]={};
+  int break_flg=0;
   char buf1[120];
   char*buf2;
   //-- count used ops
@@ -70,7 +72,13 @@ int main(int argc, char*argv[]){
     op = change_endian(memory[irg[15]/4]);
 
     //---- debug
-    if(isDebug == 0){
+    break_flg=0;
+    for(i=0;i<10;i++){
+      if(breakpoints[i]!=0 && irg[15]==breakpoints[i]){
+	break_flg=1; break;
+      }
+    }
+    if(isDebug==0 || break_flg){
       if(if_print_op){
 	printf("%05d: ",irg[15]);
 	//p_binary(op,32);
@@ -78,19 +86,20 @@ int main(int argc, char*argv[]){
       } if_print_op = 1;
 
       fgets(buf1,100,stdin);
-      if(!strcmp(buf1,"\n")){ continue; }
+      if(!strcmp(buf1,"\n")){ if_print_op = 0; isDebug = 0; continue; }
       buf2 = strtok(buf1," \n");
       if(!strcmp(buf2,"-h")){
 	printf("---help---\n");
-	printf("-h       : show this.\n");
-	printf("print    : print regster.\n");
-     	printf("  option : rg, irg, frg, op.\n");
-	printf("list (n) : show surrounding +-n ops (default&min 5).\n");
-	printf("step (n) : step n (default 1).\n");
-	printf("break    : not yet. \n");
-	printf("continue : end debug mode.\n");
-	printf("exit     : end simulator.\n");
-	if_print_op = 0;
+	printf("-h        : show this.\n");
+	printf("print opt : print 'opt'.\n");
+     	printf("   opt    : rg, irg, frg, op, breakpoint, bp.\n");
+	printf("list (n)  : show surrounding +-n ops (default&min 5).\n");
+	printf("step (n)  : step n (default 1).\n");
+	printf("break n   : set breakpoint.\n");
+        printf("delete n  : delete nth breakpoint.\n");
+	printf("continue  : end debug mode.\n");
+	printf("exit      : end simulator.\n");
+	if_print_op = 0; isDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"print")){
 	buf2 = strtok(NULL," \n");
@@ -106,10 +115,12 @@ int main(int argc, char*argv[]){
 	  printf("frg[%d",frg[0]); for(i=1;i<16;i++){ printf(", %d",frg[i]); } printf("]\n");
 	} else if(!strcmp(buf2,"op")) {
 	  printf("%05d: ",irg[15]); print_op(op);
+	} else if(!strcmp(buf2,"breakpoint") || !strcmp(buf2,"bp")) {
+	  show_array(breakpoints, 10);
 	} else {
 	  //printf("print what?\n");
 	}
-	if_print_op = 0;
+	if_print_op = 0; isDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"list")){
 	buf2 = strtok(NULL," \n");
@@ -119,18 +130,32 @@ int main(int argc, char*argv[]){
 	  printf("%05d: ",i);
 	  print_op(change_endian(memory[i/4]));
 	}
-	if_print_op = 0;
+	if_print_op = 0; isDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"step")){
 	buf2 = strtok(NULL," \n");
 	if(buf2==NULL){
-	  isDebug += 1;
+	  isDebug = 1;
 	} else {
 	  tmp = atoi(buf2);
-	  if(tmp>0){ isDebug += atoi(buf2); }
-	  else { isDebug+=1; }
+	  if(tmp>0){ isDebug = atoi(buf2); }
+	  else { isDebug = 1; }
 	}
       } else if(!strcmp(buf2,"break")){
+	buf2 = strtok(NULL," \n");
+	if(tmp=atoi(buf2)){
+	  add_array(breakpoints, tmp, 10);
+	  printf("set breakpoint: %d\n",tmp);
+	} else { printf("invalid.\n"); }
+	if_print_op = 0; isDebug = 0;
+	continue;
+      } else if(!strcmp(buf2,"delete")){
+	buf2 = strtok(NULL," \n");
+	if(tmp=atoi(buf2)){
+	  del_array(breakpoints, tmp);
+	  printf("delete breakpoint: %d\n",tmp);
+	} else { printf("invalid.\n"); }
+	if_print_op = 0; isDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"continue")){
 	printf("program continue.\n");	
@@ -138,11 +163,13 @@ int main(int argc, char*argv[]){
 	break;
       } else {
 	printf("invalid command.\n");
+	if_print_op = 0; isDebug = 0;
 	continue;
       }
     }
     if(isDebug>=0){ isDebug--; }
     //debug ----
+
 
     //-- end with halt(beq r0 r0 r15 0)
     if(op == 0x8001e000){ end = 1; }
