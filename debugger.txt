@@ -2,6 +2,7 @@
 
 シミュレータ実行時に-dか-dubugを引数につけるとデバッグモード。
 
+
 commands:
 -h
   helpを表示。
@@ -9,18 +10,19 @@ commands:
 print ([rg, irg, frg, op, breakpoint, bp])
   色々表示。デフォルトはレジスタ。
 
-list (n)
+list [n]
   現在地の周囲±n個の命令を表示。
   デフォルトは 5。
   最低値も 5。
 
-step (n)
+step [n]
   命令を n 回実行。
   デフォルトは 1。
 
 break n
   ブレイクポイントをセット。
   次回からPCがnになったら停止する。
+
 
 delete n
   指定番号のブレイクポイントを消去。

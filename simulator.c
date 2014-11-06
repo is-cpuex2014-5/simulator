@@ -377,8 +377,8 @@ int main(int argc, char*argv[]){
 
     printf("irg[%d",irg[0]);
     for(i=1;i<16;i++){ printf(", %d",irg[i]); }
-    printf("]\nfrg[%d",frg[0]);
-    for(i=1;i<16;i++){ printf(", %d",frg[i]); }
+    printf("]\nfrg[%f",frg[0]);
+    for(i=1;i<16;i++){ printf(", %f",frg[i]); }
     printf("]\n");
     
     printf("%d oprations\n",execCounter);
