@@ -1,26 +1,25 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -Wextra -g -O2
+CFLAGS = -std=c11 -Wall -Wextra -g -O2 -I../fpu/
 
 TARGET = simulator
 SRCS = moromoro
 ARGS = ${TARGET:=.c} ${SRCS:=.c} 
 OBJS = ${ARGS:.c=.o}
-HEADS = ${SRCS:=.h}
+HEADS = ${SRCS:=.h} fpus.h
 
 VPATH = ../fpu
-FPUS = fadd fsub floor float fmul i2f
+FPUS = fadd fsub fmul fdiv i2f floor float
 FPU_O = ${FPUS:=.o}
+FPU_H = ${FPUS:=.h}
 
 all: ${TARGET}
 
 ${TARGET}: ${OBJS} ${FPU_O}
 	${CC} ${CFLAGS} -o $@ $^
-${TARGET}: ${HEADS}
+${TARGET}: ${HEADS} ${FPUS_H}
 
-${FPUS}: %: %.o %.h
-	 ${CC} ${CFLAGS} -o $@ $<
 
 clean:
 	rm ${TARGET} *.o
 
-.PHONY: all clean fpus
+.PHONY: all clean
