@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "moromoro.h"
@@ -40,14 +41,12 @@ int main(int argc, char*argv[]){
   uint32_t rgs[3];
   uint32_t option=0;
   int nextPC=0;
-  uint32_t irg[16]={}; // int register
-  uint32_t frg[16]={}; // float register
+  typechanger irg[16]={}; // int register
+  typechanger frg[16]={}; // float register
   int end=0;
 
   //
   int i,tmp;
-  typechanger tc1,tc2,tc3;
-  typechanger tcs[16]={};
 
 
   //-- debug
@@ -66,13 +65,13 @@ int main(int argc, char*argv[]){
   int usedOpCounter[128]={};
   int execCounter=0;
   //-- native flu
-  float n_frg[16]={};
+  typechanger n_frg[16]={};
 
 
   // initialize
-  irg[0]  = 0;       // 0 register
-  irg[14] = INIT_SP; // sp
-  irg[15] = INIT_PC; // pc (ip)
+  irg[0].i  = 0;       // 0 register
+  irg[14].i = INIT_SP; // sp
+  irg[15].i = INIT_PC; // pc (ip)
 
   // option check
   for(i=0;i<argc;i++){
@@ -93,18 +92,18 @@ int main(int argc, char*argv[]){
   // main loop
   while(1){
     //---- fetch
-    op = change_endian(memory[irg[15]/4]);
+    op = change_endian(memory[irg[15].i/4]);
 
     //---- debug
     breakflg=0;
     for(i=0;i<10;i++){
-      if(breakpoints[i]!=0 && irg[15]==breakpoints[i]){
+      if(breakpoints[i]!=0 && irg[15].i==breakpoints[i]){
 	breakflg=1; break;
       }
     }
     if(!ifDebug || breakflg){
       if(ifPrintOp){
-	printf("%05d: ",irg[15]);
+	printf("%05d: ",irg[15].i);
 	//p_binary(op,32);
 	print_op(op);
       } ifPrintOp = 1;
@@ -128,26 +127,24 @@ int main(int argc, char*argv[]){
       } else if(!strcmp(buf2,"print")){
 	buf2 = strtok(NULL," \n");
 	if(buf2==NULL || !strcmp(buf2,"rg")){
-	  printf("irg[%d",irg[0]);
-	  for(i=1;i<16;i++){ printf(", %d",irg[i]); }
+	  printf("irg[%d",irg[0].i);
+	  for(i=1;i<16;i++){ printf(", %d",irg[i].i); }
 	  if(optflgs[2]){ // native FPU
-	    printf("]\nn_frg[%f",n_frg[0]);
-	    for(i=1;i<16;i++){ printf(", %f",n_frg[i]); }
+	    printf("]\nn_frg[%f",n_frg[0].f);
+	    for(i=1;i<16;i++){ printf(", %f",n_frg[i].f); }
 	  }
-	  for(i=0;i<16;i++){ tcs[i].u = frg[i]; }
-	  printf("]\nfrg[%f",tcs[0].f);
-	  for(i=1;i<16;i++){ printf(", %f",tcs[i].f); }
+	  printf("]\nfrg[%f",frg[0].f);
+	  for(i=1;i<16;i++){ printf(", %f",frg[i].f); }
 	  printf("]\n");
 	} else if(!strcmp(buf2,"irg")) {
-	  printf("irg[%d",irg[0]); for(i=1;i<16;i++){ printf(", %d",irg[i]); } printf("]\n");
+	  printf("irg[%d",irg[0].i); for(i=1;i<16;i++){ printf(", %d",irg[i].i); } printf("]\n");
 	} else if(!strcmp(buf2,"frg")) {
 	  if(optflgs[2]){ // native FPU
-	    printf("n_frg[%f",n_frg[0]); for(i=1;i<16;i++){ printf(", %f",n_frg[i]); } printf("]\n");
+	    printf("n_frg[%f",n_frg[0].f); for(i=1;i<16;i++){ printf(", %f",n_frg[i].f); } printf("]\n");
 	  }
-	  for(i=0;i<16;i++){ tcs[i].u = frg[i]; }
-	  printf("frg[%f",tcs[0].f); for(i=1;i<16;i++){ printf(", %f",tcs[i].f); } printf("]\n");
+	  printf("frg[%f",frg[0].f); for(i=1;i<16;i++){ printf(", %f",frg[i].f); } printf("]\n");
 	} else if(!strcmp(buf2,"op")) {
-	  printf("%05d: ",irg[15]); print_op(op);
+	  printf("PC: %05d\n",irg[15].i); print_op(op);
 	} else if(!strcmp(buf2,"breakpoint") || !strcmp(buf2,"bp")) {
 	  show_array(breakpoints, 10);
 	} else {
@@ -159,7 +156,7 @@ int main(int argc, char*argv[]){
 	buf2 = strtok(NULL," \n");
 	if(buf2==NULL){ tmp=5; }
 	else { tmp = max(5,atoi(buf2)); }
-	for(i=max(INIT_PC,irg[15]-tmp*4);i<=min(INIT_SP,irg[15]+tmp*4);i+=4){
+	for(i=max(INIT_PC,irg[15].i-tmp*4);i<=min(INIT_SP,irg[15].i+tmp*4);i+=4){
 	  printf("%05d: ",i);
 	  print_op(change_endian(memory[i/4]));
 	}
@@ -176,7 +173,7 @@ int main(int argc, char*argv[]){
 	}
       } else if(!strcmp(buf2,"break")){
 	buf2 = strtok(NULL," \n");
-	if(tmp=atoi(buf2)){
+	if((tmp=atoi(buf2))){
 	  add_array(breakpoints, tmp, 10);
 	  printf("set breakpoint: %d\n",tmp);
 	} else { printf("invalid.\n"); }
@@ -184,7 +181,7 @@ int main(int argc, char*argv[]){
 	continue;
       } else if(!strcmp(buf2,"delete")){
 	buf2 = strtok(NULL," \n");
-	if(tmp=atoi(buf2)){
+	if((tmp=atoi(buf2))){
 	  del_array(breakpoints, tmp);
 	  printf("delete breakpoint: %d\n",tmp);
 	} else { printf("invalid.\n"); }
@@ -212,79 +209,77 @@ int main(int argc, char*argv[]){
     execCounter++;
     
     //---- decode & exec
-    nextPC = irg[15] + 4;
+    nextPC = irg[15].i + 4;
     switch (cutoutOp(op,0,6)) { //0-6:opcode
       //--- ALU
     case 0b0000000: //add
       cutoffOp(op,rgs,&option,3);
-      tc1.u = irg[rgs[1]]; tc2.u = irg[rgs[2]]
-      tc3.i = tc1.i + tc2.i + utoi(option,13);
-      irg[rgs[0]] = tc3.u;
+      irg[rgs[0]].i = irg[rgs[1]].i + irg[rgs[2]].i + utoi(option,17);
       break;
     case 0b0000001: //addi
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]] = irg[rgs[1]] + utoi(option,17);
+      irg[rgs[0]].i = irg[rgs[1]].i + utoi(option,17);
       break;
     case 0b0000010: //sub
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]] = irg[rgs[1]] - irg[rgs[2]];
+      irg[rgs[0]].i = irg[rgs[1]].i - irg[rgs[2]].i;
       break;
     case 0b0000011: //subi
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]] = irg[rgs[1]] - utoi(option,17);
+      irg[rgs[0]].i = irg[rgs[1]].i - utoi(option,17);
       break;
     case 0b0000100: //not
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]] = ~irg[rgs[1]];
+      irg[rgs[0]].u = ~irg[rgs[1]].u;
       break;
     case 0b0000110: //and
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]] = irg[rgs[1]] & irg[rgs[2]];
+      irg[rgs[0]].u = irg[rgs[1]].u & irg[rgs[2]].u;
       break;
     case 0b0001000: //or
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]] = irg[rgs[1]] | irg[rgs[2]];
+      irg[rgs[0]].u = irg[rgs[1]].u | irg[rgs[2]].u;
       break;
     case 0b0001010: //xor
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]] = irg[rgs[1]] ^ irg[rgs[2]];
+      irg[rgs[0]].u = irg[rgs[1]].u ^ irg[rgs[2]].u;
       break;
     case 0b0001100: //nand
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]] = ~(irg[rgs[1]] & irg[rgs[2]]);
+      irg[rgs[0]].u = ~(irg[rgs[1]].u & irg[rgs[2]].u);
       break;
     case 0b0001110: //nor
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]] = ~(irg[rgs[1]] | irg[rgs[2]]);
+      irg[rgs[0]].u = ~(irg[rgs[1]].u | irg[rgs[2]].u);
       break;
     case 0b0010000: //shift
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]] = shift_(irg[rgs[1]], cutoutOp(op,24,24), cutoutOp(op,25,26), irg[rgs[2]]);
+      irg[rgs[0]].u = shift_(irg[rgs[1]].u, cutoutOp(op,24,24), cutoutOp(op,25,26), irg[rgs[2]].u);
       break;
     case 0b0010001: //shifti
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]] = shift_(irg[rgs[1]], cutoutOp(op,24,24), cutoutOp(op,25,26), utoi(cutoutOp(op,19,23),6));
+      irg[rgs[0]].u = shift_(irg[rgs[1]].u, cutoutOp(op,24,24), cutoutOp(op,25,26), utoi(cutoutOp(op,19,23),6));
       break;
       //--- FPU
     case 0b0100000: //fadd
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]] = fadd(frg[rgs[1]], frg[rgs[2]]);
-      n_frg[rgs[0]] = n_frg[rgs[1]] + n_frg[rgs[2]];
+      frg[rgs[0]].u = fadd(frg[rgs[1]].u, frg[rgs[2]].u);
+      n_frg[rgs[0]].f = n_frg[rgs[1]].f + n_frg[rgs[2]].f;
       break;
     case 0b0100010: //fsub
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]] = fsub(frg[rgs[1]], frg[rgs[2]]);
-      n_frg[rgs[0]] = n_frg[rgs[1]] - n_frg[rgs[2]];
+      frg[rgs[0]].u = fsub(frg[rgs[1]].u, frg[rgs[2]].u);
+      n_frg[rgs[0]].f = n_frg[rgs[1]].f - n_frg[rgs[2]].f;
       break;
     case 0b0100100: //fmul
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]] = fmul(frg[rgs[1]], frg[rgs[2]]);
-      n_frg[rgs[0]] = n_frg[rgs[1]] * n_frg[rgs[2]];
+      frg[rgs[0]].u = fmul(frg[rgs[1]].u, frg[rgs[2]].u);
+      n_frg[rgs[0]].f = n_frg[rgs[1]].f * n_frg[rgs[2]].f;
       break;
     case 0b0100110: //fdiv  //not yet
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]] = frg[rgs[1]] / frg[rgs[2]];
-      n_frg[rgs[0]] = n_frg[rgs[1]] / n_frg[rgs[2]];
+      frg[rgs[0]].u = frg[rgs[1]].u / frg[rgs[2]].u;
+      n_frg[rgs[0]].f = n_frg[rgs[1]].f / n_frg[rgs[2]].f;
       break;
     case 0b0101000: //fsqrt //not yet
       cutoffOp(op,rgs,&option,2);
@@ -292,125 +287,122 @@ int main(int argc, char*argv[]){
       break;
     case 0b0101010: //ftoi
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]] = h_floor(frg[rgs[1]]);
+      irg[rgs[0]].u = h_floor(frg[rgs[1]].u);
       //irg[rgs[0]] = floorf(n_frg[rgs[1]]);
       break;
     case 0b0101100: //itof
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]] = h_i2f(irg[rgs[1]]);
-      n_frg[rgs[0]] = (int)irg[rgs[1]];
+      frg[rgs[0]].u = h_i2f(irg[rgs[1]].u);
+      n_frg[rgs[0]].f = (float)irg[rgs[1]].i;
       break;
     case 0b0101110: //fneg  //not yet
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]] = -frg[rgs[1]];
-      n_frg[rgs[0]] = -n_frg[rgs[1]];
+      frg[rgs[0]].f = -frg[rgs[1]].f;
+      n_frg[rgs[0]].f = -n_frg[rgs[1]].f;
       break;
     case 0b0110000: //finv  //not yet
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]] = 1 / frg[rgs[1]];
-      n_frg[rgs[0]] = 1 / n_frg[rgs[1]];
+      frg[rgs[0]].f = 1 / frg[rgs[1]].f;
+      n_frg[rgs[0]].f = 1 / n_frg[rgs[1]].f;
       break;
       //--- branch
     case 0b1000000: //beq
       cutoffOp(op,rgs,&option,3);
-      if(irg[rgs[0]] == irg[rgs[1]]){
-	nextPC = irg[rgs[2]] + utoi(option,13);
+      if(irg[rgs[0]].i == irg[rgs[1]].i){
+	nextPC = irg[rgs[2]].i + utoi(option,13);
       }
       break;
     case 0b1000001: //beqi
       cutoffOp(op,rgs,&option,2);
-      if(irg[rgs[0]] == irg[rgs[1]]){
+      if(irg[rgs[0]].i == irg[rgs[1]].i){
 	nextPC = utoi(option,17);
       }
       break;
     case 0b1000010: //blt
       cutoffOp(op,rgs,&option,3);
-      if(utoi(irg[rgs[0]],32) < utoi(irg[rgs[1]],32)){
-	nextPC = irg[rgs[2]] + utoi(option,13);
+      if(irg[rgs[0]].i < irg[rgs[1]].i){
+	nextPC = irg[rgs[2]].i + utoi(option,13);
       }
       break;
     case 0b1000011: //blti
       cutoffOp(op,rgs,&option,2);
-      if(utoi(irg[rgs[0]],32) < utoi(irg[rgs[1]],32)){
+      if(irg[rgs[0]].i < irg[rgs[1]].i){
 	nextPC = utoi(option,17);
       }
       break;
     case 0b1000100: //bfeq
       cutoffOp(op,rgs,&option,3);
-      if(frg[rgs[0]] == frg[rgs[1]]){
-	nextPC = irg[rgs[2]] + utoi(option,13);
+      if(frg[rgs[0]].f == frg[rgs[1]].f){
+	nextPC = irg[rgs[2]].i + utoi(option,13);
       }
       break;
     case 0b1000101: //bfeqi
       cutoffOp(op,rgs,&option,2);
-      if(frg[rgs[0]] == frg[rgs[1]]){
+      if(frg[rgs[0]].f == frg[rgs[1]].f){
 	nextPC = utoi(option,17);
       }
       break;
     case 0b1000110: //bflt
       cutoffOp(op,rgs,&option,3);
       // bug @ NAN,-0 ?
-      if(utoi(irg[rgs[0]],32) < utoi(irg[rgs[1]],32)){
-	nextPC = irg[rgs[2]] + utoi(option,13);
+      if(frg[rgs[0]].f < frg[rgs[1]].f){
+	nextPC = irg[rgs[2]].i + utoi(option,13);
       }
       break;
     case 0b1000111: //bflti
       cutoffOp(op,rgs,&option,2);
-      if(utoi(irg[rgs[0]],32) < utoi(irg[rgs[1]],32)){
+      if(frg[rgs[0]].f < frg[rgs[1]].f){
 	nextPC = utoi(option,17);
       }
       break;
       //---- system
     case 0b1100000: //load
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
+      irg[rgs[0]].u = memory[irg[rgs[1]].i + utoi(option,17)];
       if(rgs[0]==15){
-	nextPC = irg[rgs[0]];
+	nextPC = irg[rgs[0]].i;
       }
       break;
     case 0b1100010: //store
       cutoffOp(op,rgs,&option,2);
-      memory[irg[rgs[1]]+utoi(option,17)] = irg[rgs[0]];
+      memory[irg[rgs[1]].i + utoi(option,17)] = irg[rgs[0]].u;
       break;
     case 0b1100100: //fload
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]] = memory[irg[rgs[1]]+utoi(option,17)];
+      frg[rgs[0]].u = memory[irg[rgs[1]].i + utoi(option,17)];
       break;
     case 0b1100110: //fstore
       cutoffOp(op,rgs,&option,2);
-      memory[irg[rgs[1]]+utoi(option,17)] = frg[rgs[0]];
+      memory[irg[rgs[1]].i + utoi(option,17)] = frg[rgs[0]].u;
       break;
     case 0b1101000: //loadr
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]] = memory[irg[rgs[1]]+irg[rgs[2]]];
+      irg[rgs[0]].u = memory[irg[rgs[1]].i + irg[rgs[2]].i];
       if(rgs[0]==15){
-	nextPC = irg[rgs[0]]; //
+	nextPC = irg[rgs[0]].i; //
       }
       break;
     case 0b1101010: //storer
       cutoffOp(op,rgs,&option,2);
-      memory[irg[rgs[1]]+irg[rgs[2]]] = irg[rgs[0]];
+      memory[irg[rgs[1]].i + irg[rgs[2]].i] = irg[rgs[0]].u;
       break;
     case 0b1101100: //floadr
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]] = memory[irg[rgs[1]]+irg[rgs[2]]];
-      n_frg[rgs[0]] = memory[irg[rgs[1]]+irg[rgs[2]]];      
+      frg[rgs[0]].u   = memory[irg[rgs[1]].i + irg[rgs[2]].i];
+      n_frg[rgs[0]].u = memory[irg[rgs[1]].i + irg[rgs[2]].i];      
       break;
     case 0b1101110: //fstorer
       cutoffOp(op,rgs,&option,2);
-      memory[irg[rgs[1]]+irg[rgs[2]]] = frg[rgs[0]];
-      if(optflgs[2]){ memory[irg[rgs[1]]+irg[rgs[2]]] = n_frg[rgs[0]]; }
+      memory[irg[rgs[1]].i + irg[rgs[2]].i] = frg[rgs[0]].u;
+      if(optflgs[2]){ memory[irg[rgs[1]].i + irg[rgs[2]].i] = n_frg[rgs[0]].u; }
       break;
     case 0b1110000: //read
       cutoffOp(op,rgs,&option,1);
-      tc1.u = irg[rgs[0]];
-      fread(&tc1.ch[3], sizeof(char), 1, stdin);
-      irg[rgs[0]] = tc1.u;
+      fread(&irg[rgs[0]].ch[3], sizeof(char), 1, stdin);
       break;
     case 0b1110001: //write
       cutoffOp(op,rgs,&option,1);
-      tc1.u = irg[rgs[0]];
-      fwrite(&tc1.ch[3], sizeof(char), 1, stdout);
+      fwrite(&irg[rgs[0]].ch[3], sizeof(char), 1, stdout);
       break;
     default:
       printf("invalid opration??\n");
@@ -418,25 +410,24 @@ int main(int argc, char*argv[]){
     } // --end switch
 
     //---- end
-    irg[15] = nextPC;
+    irg[15].i = nextPC;
     if(end){ break; }
   }
  
   // print infos
   if(optflgs[0]){ // print info
-    printf("irg[%d",irg[0]);
-    for(i=1;i<16;i++){ printf(", %d",irg[i]); }
+    printf("irg[%d",irg[0].i);
+    for(i=1;i<16;i++){ printf(", %d",irg[i].i); }
     if(optflgs[2]){ // native FPU
-      printf("]\nn_frg[%f",n_frg[0]);
-      for(i=1;i<16;i++){ printf(", %f",n_frg[i]); }
+      printf("]\nn_frg[%f",n_frg[0].f);
+      for(i=1;i<16;i++){ printf(", %f",n_frg[i].f); }
     }
-    for(i=0;i<16;i++){ tcs[i].u = frg[i]; }
-    printf("]\nfrg[%f",tcs[0].f);
-    for(i=1;i<16;i++){ printf(", %f",tcs[i].f); }
+    printf("]\nfrg[%f",frg[0].f);
+    for(i=1;i<16;i++){ printf(", %f",frg[i].f); }
     printf("]\n");
   }
+  if(optflgs[0] || optflgs[1]){ printf("%d oprations\n",execCounter); }
   if(optflgs[1]){ // count op
-    printf("%d oprations\n",execCounter);
     print_countOp(usedOpCounter);
   }
   
