@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+
 
 #include "moromoro.h"
 #include "fpu_.h"
@@ -33,7 +35,7 @@ int main(int argc, char*argv[]){
     return 1;
   }
   p_size = fread(memory,sizeof(uint32_t),MEM_SIZE,fp);
-  for(i = 0; i<MEM_SIZE; i++) memory[i] = change_endian(memory[i]);
+  for(i = 0; i<p_size; i++) memory[i] = change_endian(memory[i]);
   
   
   // vars
@@ -86,14 +88,14 @@ int main(int argc, char*argv[]){
 	printf("continue : end debug mode.\n");
 	printf("exit     : end simulator.\n");
 	continue;
-      } else if(!strcmp(buf2,"print")){
+      } else if(!strcmp(buf2,"print")|| !strcmp(buf2,"p")){
 	printf("irg[%d",irg[0]);
 	for(i=1;i<16;i++){ printf(", %d",irg[i]); }
 	printf("]\nfrg[%d",irg[0]);
 	for(i=1;i<16;i++){ printf(", %d",frg[i]); }
 	printf("]\n");
 	continue;
-      } else if(!strcmp(buf2,"step")){
+      } else if(!strcmp(buf2,"step") || !strcmp(buf2,"s")){
 	buf2 = strtok(NULL," \n");
 	if(buf2==NULL){
 	  isDebug += 1;
@@ -102,7 +104,7 @@ int main(int argc, char*argv[]){
 	}
       } else if(!strcmp(buf2,"break")){
 	continue;
-      } else if(!strcmp(buf2,"continue")){
+      } else if(!strcmp(buf2,"continue") || !strcmp(buf2,"c")){
 	printf("program continue..\n");	
       } else if(!strcmp(buf2,"exit")){
 	printf("exit..\n");
@@ -119,6 +121,8 @@ int main(int argc, char*argv[]){
     
     //---- decode & exec
     nextPC = irg[15] + 4;
+    //fprintf(stderr, "PC = %d\n", irg[15]);
+      
     switch (cutoutOp(op,0,6)) { //0-6:opcode
       //--- ALU
     case 0b0000000: //add
@@ -127,7 +131,10 @@ int main(int argc, char*argv[]){
       break;
     case 0b0000001: //addi
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]] = irg[rgs[1]] + utoi(option,17);
+      if(((op>>16)&1) == 0)
+	irg[rgs[0]] = irg[rgs[1]] + utoi(option,16);
+      else
+	irg[rgs[0]] = irg[rgs[1]] + (utoi(option,16)<<16);
       break;
     case 0b0000010: //sub
       cutoffOp(op,rgs,&option,3);
@@ -283,16 +290,18 @@ int main(int argc, char*argv[]){
     case 0b1110000: //read
       cutoffOp(op,rgs,&option,1);
       uc.u = irg[rgs[0]];
-      fread(&uc.ch[3], sizeof(char), 1, stdin);
+      fread(&uc.ch[0], sizeof(char), 1, stdin);
       irg[rgs[0]] = uc.u;
       break;
     case 0b1110001: //write
       cutoffOp(op,rgs,&option,1);
       uc.u = irg[rgs[0]];
-      fwrite(&uc.ch[3], sizeof(char), 1, stdout);
+      fwrite(&uc.ch[0], sizeof(char), 1, stdout);
       break;
     default:
       printf("invalid opration??\n");
+      p_binary(op,32);
+      printf("%d\n", irg[15]);
       break;
     } // --end switch
 
