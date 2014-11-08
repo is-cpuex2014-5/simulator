@@ -120,7 +120,7 @@ int main(int argc, char*argv[]){
 	printf("step (n)  : step n (default 1).\n");
 	printf("break n   : set breakpoint.\n");
         printf("delete n  : delete nth breakpoint.\n");
-	printf("continue  : end debug mode.\n");
+	printf("continue  : jump to next breakpoint or end.\n");
 	printf("exit      : end simulator.\n");
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
