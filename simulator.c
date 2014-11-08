@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 
 #include "moromoro.h"
 #include "fpus.h"
@@ -9,6 +11,7 @@
 #define MEM_SIZE  300000 // actually how much?
 #define INIT_PC   0
 #define INIT_SP  (MEM_SIZE / 3)
+#define INIT_HP  (MEM_SIZE / 3 * 2)
 
 typedef union typechanger{
   uint32_t u;
@@ -29,11 +32,13 @@ int main(int argc, char*argv[]){
   FILE *fp;
   uint32_t memory[MEM_SIZE]={};
   int p_size;
+  int i;
   if((fp=fopen(argv[1], "rb")) == NULL){
     printf("err@opening %s",argv[1]);
     return 1;
   }
   p_size = fread(memory,sizeof(uint32_t),MEM_SIZE,fp);
+  for(i = 0; i<p_size; i++) memory[i] = change_endian(memory[i]);
   
   
   // 
@@ -70,8 +75,10 @@ int main(int argc, char*argv[]){
 
   // initialize
   irg[0].i  = 0;       // 0 register
+  irg[13].i = INIT_HP; // heap pointer
   irg[14].i = INIT_SP; // sp
   irg[15].i = INIT_PC; // pc (ip)
+
 
   // option check
   for(i=0;i<argc;i++){
@@ -92,7 +99,7 @@ int main(int argc, char*argv[]){
   // main loop
   while(1){
     //---- fetch
-    op = change_endian(memory[irg[15].i/4]);
+    op = memory[irg[15].i/4];
 
     //---- debug
     breakflg=0;
@@ -124,7 +131,7 @@ int main(int argc, char*argv[]){
 	printf("exit      : end simulator.\n");
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
-      } else if(!strcmp(buf2,"print")){
+      } else if(!strcmp(buf2,"print") || !strcmp(buf2,"p")){
 	buf2 = strtok(NULL," \n");
 	if(buf2==NULL || !strcmp(buf2,"rg")){
 	  printf("irg[%d",irg[0].i);
@@ -162,7 +169,7 @@ int main(int argc, char*argv[]){
 	}
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
-      } else if(!strcmp(buf2,"step")){
+      } else if(!strcmp(buf2,"step") || !strcmp(buf2,"s")){
 	buf2 = strtok(NULL," \n");
 	if(buf2==NULL){
 	  ifDebug = 1;
@@ -187,7 +194,7 @@ int main(int argc, char*argv[]){
 	} else { printf("invalid.\n"); }
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
-      } else if(!strcmp(buf2,"continue")){
+      } else if(!strcmp(buf2,"continue") || !strcmp(buf2,"c")){
 	printf("program continue.\n");	
       } else if(!strcmp(buf2,"exit")){
 	break;
@@ -210,6 +217,7 @@ int main(int argc, char*argv[]){
     
     //---- decode & exec
     nextPC = irg[15].i + 4;
+
     switch (cutoutOp(op,0,6)) { //0-6:opcode
       //--- ALU
     case 0b0000000: //add
@@ -218,7 +226,10 @@ int main(int argc, char*argv[]){
       break;
     case 0b0000001: //addi
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]].i = irg[rgs[1]].i + utoi(option,17);
+      if(((op>>16)&1) == 0)
+	irg[rgs[0]].i = irg[rgs[1]].i + utoi(option,16);
+      else
+	irg[rgs[0]].i = irg[rgs[1]].i + (utoi(option,16)<<16);
       break;
     case 0b0000010: //sub
       cutoffOp(op,rgs,&option,3);
@@ -358,54 +369,59 @@ int main(int argc, char*argv[]){
       //---- system
     case 0b1100000: //load
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]].u = memory[irg[rgs[1]].i + utoi(option,17)];
+
+      irg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))/4];
       if(rgs[0]==15){
 	nextPC = irg[rgs[0]].i;
       }
       break;
     case 0b1100010: //store
       cutoffOp(op,rgs,&option,2);
-      memory[irg[rgs[1]].i + utoi(option,17)] = irg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + utoi(option,17))/4] = irg[rgs[0]].u;
       break;
     case 0b1100100: //fload
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]].u = memory[irg[rgs[1]].i + utoi(option,17)];
+      frg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))/4];
+      n_frg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))/4];
       break;
     case 0b1100110: //fstore
       cutoffOp(op,rgs,&option,2);
-      memory[irg[rgs[1]].i + utoi(option,17)] = frg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + utoi(option,17))/4] = frg[rgs[0]].u;
+      if(optflgs[2]){ memory[(irg[rgs[1]].i + utoi(option,17))/4] = n_frg[rgs[0]].u; }
       break;
     case 0b1101000: //loadr
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]].u = memory[irg[rgs[1]].i + irg[rgs[2]].i];
+      irg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];
       if(rgs[0]==15){
 	nextPC = irg[rgs[0]].i; //
       }
       break;
     case 0b1101010: //storer
       cutoffOp(op,rgs,&option,2);
-      memory[irg[rgs[1]].i + irg[rgs[2]].i] = irg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4] = irg[rgs[0]].u;
       break;
     case 0b1101100: //floadr
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]].u   = memory[irg[rgs[1]].i + irg[rgs[2]].i];
-      n_frg[rgs[0]].u = memory[irg[rgs[1]].i + irg[rgs[2]].i];      
+      frg[rgs[0]].u   = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];
+      n_frg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];      
       break;
     case 0b1101110: //fstorer
       cutoffOp(op,rgs,&option,2);
-      memory[irg[rgs[1]].i + irg[rgs[2]].i] = frg[rgs[0]].u;
-      if(optflgs[2]){ memory[irg[rgs[1]].i + irg[rgs[2]].i] = n_frg[rgs[0]].u; }
+      memory[irg[(rgs[1]].i + irg[rgs[2]].i)/4] = frg[rgs[0]].u;
+      if(optflgs[2]){ memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4] = n_frg[rgs[0]].u; }
       break;
     case 0b1110000: //read
       cutoffOp(op,rgs,&option,1);
-      fread(&irg[rgs[0]].ch[3], sizeof(char), 1, stdin);
+      fread(&irg[rgs[0]].ch[0], sizeof(char), 1, stdin);
       break;
     case 0b1110001: //write
       cutoffOp(op,rgs,&option,1);
-      fwrite(&irg[rgs[0]].ch[3], sizeof(char), 1, stdout);
+      fwrite(&irg[rgs[0]].ch[0], sizeof(char), 1, stdout);
       break;
     default:
       printf("invalid opration??\n");
+      p_binary(op,32);
+      printf("%d\n", irg[15]);
       break;
     } // --end switch
 
