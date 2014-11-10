@@ -215,6 +215,22 @@ void print_op(uint32_t op){
     cutoffOp(op,rgs,&option,2);
     printf("fstore f%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
     break;
+  case 0b1101000: //loadr
+    cutoffOp(op,rgs,&option,3);
+    printf("loadr r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    break;
+  case 0b1101010: //storer
+    cutoffOp(op,rgs,&option,3);
+    printf("storer r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    break;
+  case 0b1101100: //floadr
+    cutoffOp(op,rgs,&option,3);
+    printf("floadr f%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    break;
+  case 0b1101110: //fstorer
+    cutoffOp(op,rgs,&option,3);
+    printf("fstorer f%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    break;
   case 0b1110000: //read
     cutoffOp(op,rgs,&option,1);
     printf("read r%d\n",rgs[0]);

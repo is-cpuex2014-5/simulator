@@ -6,12 +6,13 @@
 
 
 #include "moromoro.h"
-#include "fpus.h"
+#include "fpu.h"
 
 #define MEM_SIZE  300000 // actually how much?
 #define INIT_PC   0
-#define INIT_SP  (MEM_SIZE / 3)
-#define INIT_HP  (MEM_SIZE / 3 * 2)
+#define INIT_SP  (MEM_SIZE   / 3)
+#define INIT_HP  (MEM_SIZE*2 / 3)
+//#define HALT 0x8001e000
 
 typedef union typechanger{
   uint32_t u;
@@ -20,7 +21,6 @@ typedef union typechanger{
   float f;
 } typechanger;
 
-//#define HALT 0x8001e000
 
 //---------- main
 int main(int argc, char*argv[]){
@@ -48,10 +48,9 @@ int main(int argc, char*argv[]){
   int nextPC=0;
   typechanger irg[16]={}; // int register
   typechanger frg[16]={}; // float register
-  int end=0;
 
   //
-  int i,tmp;
+  int tmp;
 
 
   //-- debug
@@ -63,7 +62,7 @@ int main(int argc, char*argv[]){
   char*buf2;
 
   //-- options
-  //---- 0:print info, 1:count op, 2:native FLU, 
+  //---- 0:print info, 1:count op, 2:native FPU, 
   int optflgs[10]={};
 
   //-- count used ops
@@ -209,7 +208,7 @@ int main(int argc, char*argv[]){
     
     
     //-- end with halt(beq r0 r0 r15 0)
-    if(op == 0x8001e000){ end = 1; }
+    if(op == 0x8001e000){ break; }
     
     //---- countOp
     usedOpCounter[cutoutOp(op,0,6)]++;
@@ -289,7 +288,7 @@ int main(int argc, char*argv[]){
       break;
     case 0b0100110: //fdiv  //not yet
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]].u = frg[rgs[1]].u / frg[rgs[2]].u;
+      frg[rgs[0]].f = frg[rgs[1]].f / frg[rgs[2]].f;
       n_frg[rgs[0]].f = n_frg[rgs[1]].f / n_frg[rgs[2]].f;
       break;
     case 0b0101000: //fsqrt //not yet
@@ -407,7 +406,7 @@ int main(int argc, char*argv[]){
       break;
     case 0b1101110: //fstorer
       cutoffOp(op,rgs,&option,2);
-      memory[irg[(rgs[1]].i + irg[rgs[2]].i)/4] = frg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4] = frg[rgs[0]].u;
       if(optflgs[2]){ memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4] = n_frg[rgs[0]].u; }
       break;
     case 0b1110000: //read
@@ -421,13 +420,12 @@ int main(int argc, char*argv[]){
     default:
       printf("invalid opration??\n");
       p_binary(op,32);
-      printf("%d\n", irg[15]);
+      printf("%d\n", irg[15].i);
       break;
     } // --end switch
 
     //---- end
     irg[15].i = nextPC;
-    if(end){ break; }
   }
  
   // print infos
