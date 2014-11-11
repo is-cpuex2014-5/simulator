@@ -25,6 +25,9 @@ FPUをcの方で実行する。
 
 
 更新履歴：
+11/11/10:30/ feq&flt
+wag氏のfeq,fltに対応(多分)
+
 11/10/17:30/ correspond new fpu
 新版fpuに対応
 &some fix

@@ -342,26 +342,26 @@ int main(int argc, char*argv[]){
       break;
     case 0b1000100: //bfeq
       cutoffOp(op,rgs,&option,3);
-      if(frg[rgs[0]].f == frg[rgs[1]].f){
+      if(feq(frg[rgs[0]].u, frg[rgs[1]].u)){
 	nextPC = irg[rgs[2]].i + utoi(option,13);
       }
       break;
     case 0b1000101: //bfeqi
       cutoffOp(op,rgs,&option,2);
-      if(frg[rgs[0]].f == frg[rgs[1]].f){
+      if(feq(frg[rgs[0]].u, frg[rgs[1]].u)){
 	nextPC = utoi(option,17);
       }
       break;
     case 0b1000110: //bflt
       cutoffOp(op,rgs,&option,3);
       // bug @ NAN,-0 ?
-      if(frg[rgs[0]].f < frg[rgs[1]].f){
+      if(flt(frg[rgs[0]].u, frg[rgs[1]].u)){
 	nextPC = irg[rgs[2]].i + utoi(option,13);
       }
       break;
     case 0b1000111: //bflti
       cutoffOp(op,rgs,&option,2);
-      if(frg[rgs[0]].f < frg[rgs[1]].f){
+      if(flt(frg[rgs[0]].u, frg[rgs[1]].u)){
 	nextPC = utoi(option,17);
       }
       break;
