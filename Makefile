@@ -1,10 +1,11 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -Wextra -g -O2 -I../fpu/
+CFLAGS = -std=c11 -Wall -Wextra -g -O2 -I../fpu/ -L../fpu/
+CLIBS = -lm -lfpu
 
 TARGET = simulator
 SRCS = moromoro
 ARGS = ${TARGET:=.c} ${SRCS:=.c} 
-OBJS = ${ARGS:.c=.o} libfpu.a
+OBJS = ${ARGS:.c=.o}  libfpu.a
 HEADS = ${SRCS:=.h} fpu.h
 
 FPU_PATH = ../fpu
@@ -19,11 +20,11 @@ fpu:
 	make -C ${FPU_PATH}
 
 ${TARGET}: ${OBJS}
-	${CC} ${CFLAGS} -o $@ $^
-${TARGET}: ${HEADS}
+	${CC} ${CFLAGS} -o $@ $^ ${CLIBS}
 
 
 clean:
+	make -C ${FPU_PATH} full_clean
 	rm ${TARGET} *.o
 
 .PHONY: all clean

@@ -25,6 +25,10 @@ FPUをcの方で実行する。
 
 
 更新履歴：
+11/11/14:30/native fpu fix
+nativeFPUのbugfix
+fpu導入時のMakefileにバグがあったようなのでfix
+
 11/11/10:30/ feq&flt
 wag氏のfeq,fltに対応(多分)
 
