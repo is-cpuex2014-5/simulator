@@ -34,13 +34,11 @@ int main(int argc, char*argv[]){
   uint32_t memory[MEM_SIZE]={};
   int p_size;
   int i;
-
   if((fp=fopen(argv[1], "rb")) == NULL){
-    fprintf(stderr, "err@opening %s",argv[1]);
+    fprintf(stderr, "err@opening %s\n",argv[1]);
     return 1;
   }
   p_size = fread(memory,sizeof(uint32_t),MEM_SIZE,fp);
-  fclose(fp);
   for(i = 0; i<p_size; i++) memory[i] = change_endian(memory[i]);
   
   
@@ -107,6 +105,13 @@ int main(int argc, char*argv[]){
       case 1:  // debug
 	fprintf(stderr, "Debugmode. input command or -h for help.\n");
 	ifDebug=0;
+	if(optarg){
+	  if((input=fopen(optarg,"rb"))==NULL){
+	    fprintf(stderr, "err@opening %s\n", optarg);
+	    return 1;
+	  }
+	  optflgs[4]=1;
+	}
 	break;
       case 2:  // nativeFPU
 	optflgs[3] = 1;
@@ -502,7 +507,10 @@ int main(int argc, char*argv[]){
   if(optflgs[2]){ // count op
     print_countOp(usedOpCounter);
   }
-  
+  if(optflgs[4]){ // exist debug input
+    fclose(input);
+  }
   //
+  fclose(fp);
   return 0;
 }
