@@ -26,7 +26,7 @@ typedef union typechanger{
 int main(int argc, char*argv[]){
   // open&read program file
   if(argc<2){
-    printf("too few args.");
+    fprintf(stderr, "too few args.");
     return 1;
   }
   FILE *fp;
@@ -34,7 +34,7 @@ int main(int argc, char*argv[]){
   int p_size;
   int i;
   if((fp=fopen(argv[1], "rb")) == NULL){
-    printf("err@opening %s",argv[1]);
+    fprintf(stderr, "err@opening %s",argv[1]);
     return 1;
   }
   p_size = fread(memory,sizeof(uint32_t),MEM_SIZE,fp);
@@ -85,7 +85,7 @@ int main(int argc, char*argv[]){
   for(i=0;i<argc;i++){
     // debugger
     if(!strcmp(argv[i],"-d") || !strcmp(argv[i],"--debug")){
-      printf("Debugmode. input command or -h for help.\n");
+      fprintf(stderr, "Debugmode. input command or -h for help.\n");
       ifDebug=0;
     } else if(!strcmp(argv[i],"-p") || !strcmp(argv[i],"--printinfo")){
       optflgs[0]=1; optflgs[1]=1;
@@ -111,7 +111,7 @@ int main(int argc, char*argv[]){
     }
     if(!ifDebug || breakflg){
       if(ifPrintOp){
-	printf("%05d: ",irg[15].i);
+	fprintf(stderr, "%05d: ",irg[15].i);
 	//p_binary(op,32);
 	print_op(op);
       } ifPrintOp = 1;
@@ -120,43 +120,43 @@ int main(int argc, char*argv[]){
       if(!strcmp(buf1,"\n")){ ifPrintOp = 0; ifDebug = 0; continue; }
       buf2 = strtok(buf1," \n");
       if(!strcmp(buf2,"-h")){
-	printf("---help---\n");
-	printf("-h        : show this.\n");
-	printf("print opt : print 'opt'.\n");
-     	printf("   opt    : rg, irg, frg, op, breakpoint, bp.\n");
-	printf("list (n)  : show surrounding +-n ops (default&min 5).\n");
-	printf("step (n)  : step n (default 1).\n");
-	printf("break n   : set breakpoint.\n");
-        printf("delete n  : delete nth breakpoint.\n");
-	printf("continue  : jump to next breakpoint or end.\n");
-	printf("exit      : end simulator.\n");
+	fprintf(stderr, "---help---\n");
+	fprintf(stderr, "-h        : show this.\n");
+	fprintf(stderr, "print opt : print 'opt'.\n");
+     	fprintf(stderr, "   opt    : rg, irg, frg, op, breakpoint, bp.\n");
+	fprintf(stderr, "list (n)  : show surrounding +-n ops (default&min 5).\n");
+	fprintf(stderr, "step (n)  : step n (default 1).\n");
+	fprintf(stderr, "break n   : set breakpoint.\n");
+        fprintf(stderr, "delete n  : delete nth breakpoint.\n");
+	fprintf(stderr, "continue  : jump to next breakpoint or end.\n");
+	fprintf(stderr, "exit      : end simulator.\n");
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"print") || !strcmp(buf2,"p")){
 	buf2 = strtok(NULL," \n");
 	if(buf2==NULL || !strcmp(buf2,"rg")){
-	  printf("irg[%d",irg[0].i);
-	  for(i=1;i<16;i++){ printf(", %d",irg[i].i); }
+	  fprintf(stderr, "irg[%d",irg[0].i);
+	  for(i=1;i<16;i++){ fprintf(stderr, ", %d",irg[i].i); }
 	  if(optflgs[3]){ // native FPU
-	    printf("]\nn_frg[%f",n_frg[0].f);
-	    for(i=1;i<16;i++){ printf(", %f",n_frg[i].f); }
+	    fprintf(stderr, "]\nn_frg[%f",n_frg[0].f);
+	    for(i=1;i<16;i++){ fprintf(stderr, ", %f",n_frg[i].f); }
 	  }
-	  printf("]\nfrg[%f",frg[0].f);
-	  for(i=1;i<16;i++){ printf(", %f",frg[i].f); }
-	  printf("]\n");
+	  fprintf(stderr, "]\nfrg[%f",frg[0].f);
+	  for(i=1;i<16;i++){ fprintf(stderr, ", %f",frg[i].f); }
+	  fprintf(stderr, "]\n");
 	} else if(!strcmp(buf2,"irg")) {
-	  printf("irg[%d",irg[0].i); for(i=1;i<16;i++){ printf(", %d",irg[i].i); } printf("]\n");
+	  fprintf(stderr, "irg[%d",irg[0].i); for(i=1;i<16;i++){ fprintf(stderr, ", %d",irg[i].i); } fprintf(stderr, "]\n");
 	} else if(!strcmp(buf2,"frg")) {
 	  if(optflgs[3]){ // native FPU
-	    printf("n_frg[%f",n_frg[0].f); for(i=1;i<16;i++){ printf(", %f",n_frg[i].f); } printf("]\n");
+	    fprintf(stderr, "n_frg[%f",n_frg[0].f); for(i=1;i<16;i++){ fprintf(stderr, ", %f",n_frg[i].f); } fprintf(stderr, "]\n");
 	  }
-	  printf("frg[%f",frg[0].f); for(i=1;i<16;i++){ printf(", %f",frg[i].f); } printf("]\n");
+	  fprintf(stderr, "frg[%f",frg[0].f); for(i=1;i<16;i++){ fprintf(stderr, ", %f",frg[i].f); } fprintf(stderr, "]\n");
 	} else if(!strcmp(buf2,"op")) {
-	  printf("PC: %05d\n",irg[15].i); print_op(op);
+	  fprintf(stderr, "PC: %05d\n",irg[15].i); print_op(op);
 	} else if(!strcmp(buf2,"breakpoint") || !strcmp(buf2,"bp")) {
 	  show_array(breakpoints, 10);
 	} else {
-	  //printf("print what?\n");
+	  //fprintf(stderr, "print what?\n");
 	}
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
@@ -165,7 +165,7 @@ int main(int argc, char*argv[]){
 	if(buf2==NULL){ tmp=5; }
 	else { tmp = max(5,atoi(buf2)); }
 	for(i=max(INIT_PC,irg[15].i-tmp*4);i<=min(INIT_SP,irg[15].i+tmp*4);i+=4){
-	  printf("%05d: ",i);
+	  fprintf(stderr, "%05d: ",i);
 	  print_op(change_endian(memory[i/4]));
 	}
 	ifPrintOp = 0; ifDebug = 0;
@@ -183,24 +183,24 @@ int main(int argc, char*argv[]){
 	buf2 = strtok(NULL," \n");
 	if((tmp=atoi(buf2))){
 	  add_array(breakpoints, tmp, 10);
-	  printf("set breakpoint: %d\n",tmp);
-	} else { printf("invalid.\n"); }
+	  fprintf(stderr, "set breakpoint: %d\n",tmp);
+	} else { fprintf(stderr, "invalid.\n"); }
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"delete")){
 	buf2 = strtok(NULL," \n");
 	if((tmp=atoi(buf2))){
 	  del_array(breakpoints, tmp);
-	  printf("delete breakpoint: %d\n",tmp);
-	} else { printf("invalid.\n"); }
+	  fprintf(stderr, "delete breakpoint: %d\n",tmp);
+	} else { fprintf(stderr, "invalid.\n"); }
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"continue") || !strcmp(buf2,"c")){
-	printf("program continue.\n");	
+	fprintf(stderr, "program continue.\n");	
       } else if(!strcmp(buf2,"exit")){
 	break;
       } else {
-	printf("invalid command.\n");
+	fprintf(stderr, "invalid command.\n");
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
       }
@@ -448,8 +448,8 @@ int main(int argc, char*argv[]){
       fwrite(&irg[rgs[0]].ch[0], sizeof(char), 1, stdout);
       break;
     default:
-      printf("invalid opration??\n");
-      printf("%05d :", irg[15].i);
+      fprintf(stderr, "invalid opration??\n");
+      fprintf(stderr, "%05d :", irg[15].i);
       p_binary(op,32);
       break;
     } // --end switch
@@ -460,18 +460,18 @@ int main(int argc, char*argv[]){
  
   // print infos
   if(optflgs[0]){ // print rg
-    printf("irg[%d",irg[0].i);
-    for(i=1;i<16;i++){ printf(", %d",irg[i].i); }
+    fprintf(stderr, "irg[%d",irg[0].i);
+    for(i=1;i<16;i++){ fprintf(stderr, ", %d",irg[i].i); }
     if(optflgs[3]){ // native FPU
-      printf("]\nn_frg[%f",n_frg[0].f);
-      for(i=1;i<16;i++){ printf(", %f",n_frg[i].f); }
+      fprintf(stderr, "]\nn_frg[%f",n_frg[0].f);
+      for(i=1;i<16;i++){ fprintf(stderr, ", %f",n_frg[i].f); }
     }
-    printf("]\nfrg[%f",frg[0].f);
-    for(i=1;i<16;i++){ printf(", %f",frg[i].f); }
-    printf("]\n");
+    fprintf(stderr, "]\nfrg[%f",frg[0].f);
+    for(i=1;i<16;i++){ fprintf(stderr, ", %f",frg[i].f); }
+    fprintf(stderr, "]\n");
   }
   if(optflgs[1]){ // total exec
-    printf("%d oprations\n",execCounter);
+    fprintf(stderr, "%d oprations\n",execCounter);
   }
   if(optflgs[2]){ // count op
     print_countOp(usedOpCounter);

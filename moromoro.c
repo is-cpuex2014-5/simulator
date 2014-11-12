@@ -33,7 +33,7 @@ uint32_t change_endian(uint32_t u){
 //-- uint -> int
 int utoi(uint32_t u, int digit){
   if(digit<2 || digit>32) {
-    printf("error@utoi invalid input.");
+    fprintf(stderr, "error@utoi invalid input.");
     return -1;
   }
   uint32_t s = (u>>(digit-1))&1;
@@ -48,9 +48,9 @@ int utoi(uint32_t u, int digit){
 int p_binary(uint32_t b,int digit){
   int i;
   for(i=digit-1;i>=0;i--){
-    printf("%d", (b>>i) & 1);
+    fprintf(stderr, "%d", (b>>i) & 1);
   }
-  printf("\n");
+  fprintf(stderr, "\n");
   return 0;
 }
 
@@ -62,185 +62,185 @@ void print_op(uint32_t op){
     //--- ALU
   case 0b0000000: //add
     cutoffOp(op,rgs,&option,3);
-    printf("add r%d r%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+    fprintf(stderr, "add r%d r%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
     break;
   case 0b0000001: //addi
     cutoffOp(op,rgs,&option,2);
-    printf("addi r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(stderr, "addi r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b0000010: //sub
     cutoffOp(op,rgs,&option,3);
-    printf("sub r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]); 
+    fprintf(stderr, "sub r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]); 
     break;
   case 0b0000011: //subi
     cutoffOp(op,rgs,&option,2);
-    printf("subi r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(stderr, "subi r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b0000100: //not
     cutoffOp(op,rgs,&option,2);
-    printf("not r%d r%d\n",rgs[0],rgs[1]);
+    fprintf(stderr, "not r%d r%d\n",rgs[0],rgs[1]);
     break;
   case 0b0000110: //and
     cutoffOp(op,rgs,&option,3);
-    printf("and r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "and r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0001000: //or
     cutoffOp(op,rgs,&option,3);
-    printf("or r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "or r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0001010: //xor
     cutoffOp(op,rgs,&option,3);
-    printf("xor r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "xor r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0001100: //nand
     cutoffOp(op,rgs,&option,3);
-    printf("nand r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "nand r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0001110: //nor
     cutoffOp(op,rgs,&option,3);
-    printf("nor r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "nor r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0010000: //shift
     cutoffOp(op,rgs,&option,3);
-    printf("shift r%d r%d r%d",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "shift r%d r%d r%d",rgs[0],rgs[1],rgs[2]);
     if(cutoutOp(op,24,24)){
-      printf(" r");
-    } else { printf(" l"); }
+      fprintf(stderr, " r");
+    } else { fprintf(stderr, " l"); }
     if(cutoutOp(op,25,26)==0){
-      printf("-arith\n");
+      fprintf(stderr, "-arith\n");
     } else if(cutoutOp(op,25,26)==1){
-      printf("-logic\n");
+      fprintf(stderr, "-logic\n");
     } else {
-      printf("-rotate\n");
+      fprintf(stderr, "-rotate\n");
     }
     break;
   case 0b0010001: //shifti
     cutoffOp(op,rgs,&option,3);
-    printf("shifti r%d r%d %d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6));
+    fprintf(stderr, "shifti r%d r%d %d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6));
     if(cutoutOp(op,24,24)){
-      printf(" r");
-    } else { printf(" l"); }
+      fprintf(stderr, " r");
+    } else { fprintf(stderr, " l"); }
     if(cutoutOp(op,25,26)==0){
-      printf("-arith\n");
+      fprintf(stderr, "-arith\n");
     } else if(cutoutOp(op,25,26)==1){
-      printf("-logic\n");
+      fprintf(stderr, "-logic\n");
     } else {
-      printf("-rotate\n");
+      fprintf(stderr, "-rotate\n");
     }
     break;
     //--- FLU
   case 0b0100000: //fadd
     cutoffOp(op,rgs,&option,3);
-    printf("fadd f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "fadd f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0100010: //fsub
     cutoffOp(op,rgs,&option,3);
-    printf("fsub f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "fsub f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0100100: //fmul
     cutoffOp(op,rgs,&option,3);
-    printf("fmul f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "fmul f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0100110: //fdiv
     cutoffOp(op,rgs,&option,3);
-    printf("fdiv f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "fdiv f%d f%d f%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0101000: //fsqrt
     cutoffOp(op,rgs,&option,2);
-    printf("fsqrt f%d f%d\n",rgs[0],rgs[1]);
+    fprintf(stderr, "fsqrt f%d f%d\n",rgs[0],rgs[1]);
     break;
   case 0b0101010: //ftoi
     cutoffOp(op,rgs,&option,2);
-    printf("ftoi r%d f%d\n",rgs[0],rgs[1]);
+    fprintf(stderr, "ftoi r%d f%d\n",rgs[0],rgs[1]);
     break;
   case 0b0101100: //itof
     cutoffOp(op,rgs,&option,2);
-    printf("itof f%d r%d\n",rgs[0],rgs[1]);
+    fprintf(stderr, "itof f%d r%d\n",rgs[0],rgs[1]);
     break;
   case 0b0101110: //fneg
     cutoffOp(op,rgs,&option,2);
-    printf("fadd f%d f%d\n",rgs[0],rgs[1]);
+    fprintf(stderr, "fadd f%d f%d\n",rgs[0],rgs[1]);
     break;
   case 0b0110000: //finv
     cutoffOp(op,rgs,&option,2);
-    printf("finv f%d f%d\n",rgs[0],rgs[1]);
+    fprintf(stderr, "finv f%d f%d\n",rgs[0],rgs[1]);
     break;
     //--- branch
   case 0b1000000: //beq
     cutoffOp(op,rgs,&option,3);
-    printf("beq r%d r%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+    fprintf(stderr, "beq r%d r%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
     break;
   case 0b1000001: //beqi
     cutoffOp(op,rgs,&option,2);
-    printf("beqi r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(stderr, "beqi r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1000010: //blt
     cutoffOp(op,rgs,&option,3);
-    printf("blt r%d r%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+    fprintf(stderr, "blt r%d r%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
     break;
   case 0b1000011: //blti
     cutoffOp(op,rgs,&option,2);
-    printf("blti r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(stderr, "blti r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1000100: //bfeq
     cutoffOp(op,rgs,&option,3);
-    printf("bfeq f%d f%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+    fprintf(stderr, "bfeq f%d f%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
     break;
   case 0b1000101: //bfeqi
     cutoffOp(op,rgs,&option,2);
-    printf("bfeqi f%d f%d %d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(stderr, "bfeqi f%d f%d %d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1000110: //bflt
     cutoffOp(op,rgs,&option,3);
-    printf("bflt f%d f%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+    fprintf(stderr, "bflt f%d f%d r%d %d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
     break;
   case 0b1000111: //bflti
     cutoffOp(op,rgs,&option,2);
-    printf("bflti f%d f%d %d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(stderr, "bflti f%d f%d %d\n",rgs[0],rgs[1],utoi(option,17));
     break;
     //---- system
   case 0b1100000: //load
     cutoffOp(op,rgs,&option,2);
-    printf("load r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(stderr, "load r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1100010: //store
     cutoffOp(op,rgs,&option,2);
-    printf("store r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(stderr, "store r%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1100100: //fload
     cutoffOp(op,rgs,&option,2);
-    printf("fload f%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(stderr, "fload f%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1100110: //fstore
     cutoffOp(op,rgs,&option,2);
-    printf("fstore f%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(stderr, "fstore f%d r%d %d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1101000: //loadr
     cutoffOp(op,rgs,&option,3);
-    printf("loadr r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "loadr r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b1101010: //storer
     cutoffOp(op,rgs,&option,3);
-    printf("storer r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "storer r%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b1101100: //floadr
     cutoffOp(op,rgs,&option,3);
-    printf("floadr f%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "floadr f%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b1101110: //fstorer
     cutoffOp(op,rgs,&option,3);
-    printf("fstorer f%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(stderr, "fstorer f%d r%d r%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b1110000: //read
     cutoffOp(op,rgs,&option,1);
-    printf("read r%d\n",rgs[0]);
+    fprintf(stderr, "read r%d\n",rgs[0]);
     break;
   case 0b1110001: //write
     cutoffOp(op,rgs,&option,1);
-    printf("write r%d\n",rgs[0]);
+    fprintf(stderr, "write r%d\n",rgs[0]);
     break;
   default:
-    printf("invalid opration.\n");
+    fprintf(stderr, "invalid opration.\n");
     break;
   }
   return;
@@ -308,12 +308,12 @@ void show_array(int*ar, int ln){
   int i,flg=0;
   for(i=0;i<ln;i++){
     if(ar[i]){
-      printf("%d: break@ %d\n",i+1,ar[i]);
+      fprintf(stderr, "%d: break@ %d\n",i+1,ar[i]);
       flg=1;
     }
   }
   if(!flg){
-    printf("no breakpoints.\n");
+    fprintf(stderr, "no breakpoints.\n");
   }
   return;
 }
@@ -329,44 +329,44 @@ void print_countOp(int*count){
     }
     if(count[mid]>0){
       switch (mid){
-      case 0b0000000: printf("add    :"); break;
-      case 0b0000001: printf("addi   :"); break;
-      case 0b0000010: printf("sub    :"); break;
-      case 0b0000011: printf("subi   :"); break;
-      case 0b0000100: printf("not    :"); break;
-      case 0b0000110: printf("and    :"); break;
-      case 0b0001000: printf("or     :"); break;
-      case 0b0001010: printf("xor    :"); break;
-      case 0b0001100: printf("nand   :"); break;
-      case 0b0001110: printf("nor    :"); break;
-      case 0b0010000: printf("shift  :"); break;
-      case 0b0010001: printf("shifti :"); break;
-      case 0b0100000: printf("fadd   :"); break;
-      case 0b0100010: printf("fsub   :"); break;
-      case 0b0100100: printf("fmul   :"); break;
-      case 0b0100110: printf("fdiv   :"); break;
-      case 0b0101000: printf("fsqrt  :"); break;
-      case 0b0101010: printf("ftoi   :"); break;
-      case 0b0101100: printf("itof   :"); break;
-      case 0b0101110: printf("fneg   :"); break;
-      case 0b0110000: printf("finv   :"); break;
-      case 0b1000000: printf("beq    :"); break;
-      case 0b1000001: printf("beqi   :"); break;
-      case 0b1000010: printf("blt    :"); break;
-      case 0b1000011: printf("blti   :"); break;
-      case 0b1000100: printf("bfeq   :"); break;
-      case 0b1000101: printf("bfeqi  :"); break;
-      case 0b1000110: printf("bflt   :"); break;
-      case 0b1000111: printf("bflti  :"); break;
-      case 0b1100000: printf("load   :"); break;
-      case 0b1100010: printf("store  :"); break;
-      case 0b1100100: printf("fload  :"); break;
-      case 0b1100110: printf("fstore :"); break;
-      case 0b1110000: printf("read   :"); break;
-      case 0b1110001: printf("write  :"); break;
-      default:        printf("??     :"); break;
+      case 0b0000000: fprintf(stderr, "add    :"); break;
+      case 0b0000001: fprintf(stderr, "addi   :"); break;
+      case 0b0000010: fprintf(stderr, "sub    :"); break;
+      case 0b0000011: fprintf(stderr, "subi   :"); break;
+      case 0b0000100: fprintf(stderr, "not    :"); break;
+      case 0b0000110: fprintf(stderr, "and    :"); break;
+      case 0b0001000: fprintf(stderr, "or     :"); break;
+      case 0b0001010: fprintf(stderr, "xor    :"); break;
+      case 0b0001100: fprintf(stderr, "nand   :"); break;
+      case 0b0001110: fprintf(stderr, "nor    :"); break;
+      case 0b0010000: fprintf(stderr, "shift  :"); break;
+      case 0b0010001: fprintf(stderr, "shifti :"); break;
+      case 0b0100000: fprintf(stderr, "fadd   :"); break;
+      case 0b0100010: fprintf(stderr, "fsub   :"); break;
+      case 0b0100100: fprintf(stderr, "fmul   :"); break;
+      case 0b0100110: fprintf(stderr, "fdiv   :"); break;
+      case 0b0101000: fprintf(stderr, "fsqrt  :"); break;
+      case 0b0101010: fprintf(stderr, "ftoi   :"); break;
+      case 0b0101100: fprintf(stderr, "itof   :"); break;
+      case 0b0101110: fprintf(stderr, "fneg   :"); break;
+      case 0b0110000: fprintf(stderr, "finv   :"); break;
+      case 0b1000000: fprintf(stderr, "beq    :"); break;
+      case 0b1000001: fprintf(stderr, "beqi   :"); break;
+      case 0b1000010: fprintf(stderr, "blt    :"); break;
+      case 0b1000011: fprintf(stderr, "blti   :"); break;
+      case 0b1000100: fprintf(stderr, "bfeq   :"); break;
+      case 0b1000101: fprintf(stderr, "bfeqi  :"); break;
+      case 0b1000110: fprintf(stderr, "bflt   :"); break;
+      case 0b1000111: fprintf(stderr, "bflti  :"); break;
+      case 0b1100000: fprintf(stderr, "load   :"); break;
+      case 0b1100010: fprintf(stderr, "store  :"); break;
+      case 0b1100100: fprintf(stderr, "fload  :"); break;
+      case 0b1100110: fprintf(stderr, "fstore :"); break;
+      case 0b1110000: fprintf(stderr, "read   :"); break;
+      case 0b1110001: fprintf(stderr, "write  :"); break;
+      default:        fprintf(stderr, "invalid:"); break;
       }
-      printf(" %d times.\n",count[mid]);
+      fprintf(stderr, " %d times.\n",count[mid]);
       count[mid] = 0;
     } else {
       flg = 0;
