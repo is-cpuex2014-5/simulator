@@ -33,6 +33,7 @@ int main(int argc, char*argv[]){
   uint32_t memory[MEM_SIZE]={};
   int p_size;
   int i;
+
   if((fp=fopen(argv[1], "rb")) == NULL){
     fprintf(stderr, "err@opening %s",argv[1]);
     return 1;

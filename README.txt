@@ -2,29 +2,30 @@
 
 使用方法：
 1: make
-2: ./simulator "実行ファイル" [-p|--printinfo] [-c|--countop] [-n|--nativeFPU] [-d|--debug]
+2: ./simulator "実行ファイル" [option]
 
 
-オプションについて:
-順番は任意。
-
-・-p / --printinfo
+オプション一覧：
+-p | --printinfo
 終了時にレジスタの値と命令実行数を吐く
 
-・-c / --countop
+-c | --countop
 終了時に命令実行数と書く命令毎の実行数を吐く
 
-・-n / --nativeFPU
+-n | --nativeFPU
 FPUをcの方で実行する。
 元の方のも実行して保持してあるがmemory命令はまだなので意味は薄い。
 
-・debug mode
-引数に -d か --debug をつけるとデバッグモード
+(-d | --debug)
+デバッグモード。
 コマンドはヘルプ参照
 
 
 
 更新履歴：
+11/13/06:00/output to stderr
+諸々の出力をstderrに変更。
+
 11/11/14:30/native fpu fix
 nativeFPUのbugfix
 fpu導入時のMakefileにバグがあったようなのでfix
