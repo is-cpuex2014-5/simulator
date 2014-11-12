@@ -53,6 +53,9 @@ int p_binary(uint32_t b,int digit){
   fprintf(stderr, "\n");
   return 0;
 }
+int p_hexadecimal(uint32_t b){
+  fprintf(stderr, "%x\n",b);
+}
 
 //-- print opration in assembli
 void print_op(uint32_t op){
@@ -240,7 +243,9 @@ void print_op(uint32_t op){
     fprintf(stderr, "write r%d\n",rgs[0]);
     break;
   default:
-    fprintf(stderr, "invalid opration.\n");
+    fprintf(stderr, "invalid op: ");
+    p_binary(op,32);
+    //p_hexadecimal(op);
     break;
   }
   return;

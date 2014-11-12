@@ -186,18 +186,20 @@ int main(int argc, char*argv[]){
 	  fprintf(stderr, "PC: %05d\n",irg[15].i); print_op(op);
 	} else if(!strcmp(buf2,"breakpoint") || !strcmp(buf2,"bp")) {
 	  show_array(breakpoints, 10);
+	} else if(!strcmp(buf2,"exectime") || !strcmp(buf2,"et")) {
+	  fprintf(stderr, "%d time.\n",execCounter);
 	} else {
 	  //fprintf(stderr, "print what?\n");
 	}
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
-      } else if(!strcmp(buf2,"list")){
+      } else if(!strcmp(buf2,"list") || !strcmp(buf2,"l")){
 	buf2 = strtok(NULL," \n");
 	if(buf2==NULL){ tmp=5; }
 	else { tmp = max(5,atoi(buf2)); }
-	for(i=max(INIT_PC,irg[15].i-tmp*4);i<=min(INIT_SP,irg[15].i+tmp*4);i+=4){
+	for(i=max(INIT_PC,irg[15].i-tmp*4);i<=min(INIT_HP,irg[15].i+tmp*4);i+=4){
 	  fprintf(stderr, "%05d: ",i);
-	  print_op(change_endian(memory[i/4]));
+	  print_op(memory[i/4]);
 	}
 	ifPrintOp = 0; ifDebug = 0;
 	continue;

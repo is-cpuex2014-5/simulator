@@ -4,18 +4,21 @@
 
 
 commands:
+  *付きは一文字めだけでも使用可。
+
 -h
   helpを表示。
 
-print ([rg, irg, frg, op, breakpoint, bp])
+print* ([(i|f)?rg, op, (breakpoint|bp), (exectime|et))
   色々表示。デフォルトはレジスタ。
+  その他：整数・浮動小数レジスタ、次の命令＆PC、ブレイクポイントのリスト、現在までの命令実行回数
 
-list [n]
+list* [n]
   現在地の周囲±n個の命令を表示。
   デフォルトは 5。
   最低値も 5。
 
-step [n]
+step* [n]
   命令を n 回実行。
   デフォルトは 1。
 
@@ -28,7 +31,7 @@ delete n
   指定番号のブレイクポイントを消去。
   番号は print bp で確認できる。
 
-continue
+continue*
   次のブレイクポイントor終了まで飛ばす
 
 exit
