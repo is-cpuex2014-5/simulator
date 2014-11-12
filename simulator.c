@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <getopt.h>
 
 #include "moromoro.h"
 #include "fpu.h"
@@ -39,6 +40,7 @@ int main(int argc, char*argv[]){
     return 1;
   }
   p_size = fread(memory,sizeof(uint32_t),MEM_SIZE,fp);
+  fclose(fp);
   for(i = 0; i<p_size; i++) memory[i] = change_endian(memory[i]);
   
   
@@ -49,10 +51,10 @@ int main(int argc, char*argv[]){
   int nextPC=0;
   typechanger irg[16]={}; // int register
   typechanger frg[16]={}; // float register
+  FILE *input, *output;
 
   //
   int tmp;
-
 
   //-- debug
   int ifDebug=-1;
@@ -63,9 +65,8 @@ int main(int argc, char*argv[]){
   char*buf2;
 
   //-- options
-  //---- 0:print info, 1:count op, 2:native FPU, 
-  //---- 0:print rg,  1:print total exec, 2:count op,
-  //---- 3:native FPU, 
+  //---- 0:print rg, 1:print total exec, 2:count op,
+  //---- 3:native FPU, 4:exist debug input,
   int optflgs[10]={};
 
   //-- count used ops
@@ -80,23 +81,47 @@ int main(int argc, char*argv[]){
   irg[13].i = INIT_HP; // heap pointer
   irg[14].i = INIT_SP; // sp
   irg[15].i = INIT_PC; // pc (ip)
+  input  = stdin;      // from where get input
+  output = stdout;     //
 
-
-  // option check
-  for(i=0;i<argc;i++){
-    // debugger
-    if(!strcmp(argv[i],"-d") || !strcmp(argv[i],"--debug")){
-      fprintf(stderr, "Debugmode. input command or -h for help.\n");
-      ifDebug=0;
-    } else if(!strcmp(argv[i],"-p") || !strcmp(argv[i],"--printinfo")){
-      optflgs[0]=1; optflgs[1]=1;
-    } else if(!strcmp(argv[i],"-c") || !strcmp(argv[i],"--countop")){
-      optflgs[1]=1; optflgs[2]=1;
-    } else if(!strcmp(argv[i],"-n") || !strcmp(argv[i],"--nativeFPU")){
-      optflgs[3]=1;
+  //---- option check
+  int c;
+  int optionIndex;
+  static struct option long_options[]={
+    {"countop",   no_argument,       0, 0},
+    {"debug",     optional_argument, 0, 0},
+    {"nativeFPU", optional_argument, 0, 0},
+    {"printinfo", no_argument,       0, 0},
+    {0,           0,                 0, 0}
+  };
+  while(1){
+    c = getopt_long_only(argc,argv,"",
+			 long_options, &optionIndex);
+    if(c<0){ break; }
+    switch(c){
+    case 0:
+      switch(optionIndex){
+      case 0:  // countop
+	optflgs[1] = optflgs[2] = 1;
+	break;
+      case 1:  // debug
+	fprintf(stderr, "Debugmode. input command or -h for help.\n");
+	ifDebug=0;
+	break;
+      case 2:  // nativeFPU
+	optflgs[3] = 1;
+	break;
+      case 3:  // printinfo
+	optflgs[0] = optflgs[1] = 1;
+	break;
+      }
+      break;
+    default:
+      fprintf(stderr, "? invalid option:%x ?\n",c);
+      break;
     }
   }
-
+  // option check ----
   
   // main loop
   while(1){
@@ -442,11 +467,11 @@ int main(int argc, char*argv[]){
       break;
     case 0b1110000: //read
       cutoffOp(op,rgs,&option,1);
-      fread(&irg[rgs[0]].ch[0], sizeof(char), 1, stdin);
+      fread(&irg[rgs[0]].ch[0], sizeof(char), 1, input);
       break;
     case 0b1110001: //write
       cutoffOp(op,rgs,&option,1);
-      fwrite(&irg[rgs[0]].ch[0], sizeof(char), 1, stdout);
+      fwrite(&irg[rgs[0]].ch[0], sizeof(char), 1, output);
       break;
     default:
       fprintf(stderr, "invalid opration??\n");
@@ -479,6 +504,5 @@ int main(int argc, char*argv[]){
   }
   
   //
-  fclose(fp);
   return 0;
 }

@@ -23,6 +23,9 @@ FPUをcの方で実行する。
 
 
 更新履歴：
+11/13/07:30/getopt
+オプション判定にgetoptを使うように変更。
+
 11/13/06:00/output to stderr
 諸々の出力をstderrに変更。
 
