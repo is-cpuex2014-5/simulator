@@ -86,47 +86,50 @@ int main(int argc, char*argv[]){
   int c;
   int optionIndex;
   static struct option long_options[]={
-    {"countop",   no_argument,       0, 0},
-    {"debug",     optional_argument, 0, 0},
-    {"nativeFPU", optional_argument, 0, 0},
-    {"printinfo", no_argument,       0, 0},
+    {"countop",   no_argument,       0, 'c'},
+    {"debug",     optional_argument, 0, 'd'},
+    {"nativeFPU", optional_argument, 0, 'n'},
+    {"printinfo", no_argument,       0, 'p'},
     {0,           0,                 0, 0}
   };
   while(1){
-    c = getopt_long_only(argc,argv,"",
+    c = getopt_long_only(argc,argv,"cd::n::p",
 			 long_options, &optionIndex);
     if(c<0){ break; }
     switch(c){
-    case 0:
-      switch(optionIndex){
-      case 0:  // countop
-	optflgs[1] = optflgs[2] = 1;
-	break;
-      case 1:  // debug
-	fprintf(stderr, "Debugmode. input command or -h for help.\n");
-	ifDebug=0;
-	if(optarg){
-	  if((input=fopen(optarg,"rb"))==NULL){
-	    fprintf(stderr, "err@opening %s\n", optarg);
-	    return 1;
-	  }
-	  optflgs[4]=1;
+    case 0: break;
+    case 'c':  // countop
+      optflgs[1] = optflgs[2] = 1;
+      break;
+    case 'd':  // debug
+      fprintf(stderr, "Debugmode.\n");
+      if(optarg){
+	fprintf(stderr, "get input from: %s\n", optarg);
+	if((input=fopen(optarg,"rb"))==NULL){
+	  fprintf(stderr, "err@opening %s\n", optarg);
+	  return 1;
 	}
-	break;
-      case 2:  // nativeFPU
-	optflgs[3] = 1;
-	break;
-      case 3:  // printinfo
-	optflgs[0] = optflgs[1] = 1;
-	break;
+	optflgs[4]=1;
+      }
+      fprintf(stderr, "input command or -h for help.\n");
+      ifDebug=0;
+      break;
+    case 'n':  // nativeFPU
+      optflgs[3] = 1;
+      if(optarg){
+	fprintf(stderr, "%s\n", optarg);
+	fprintf(stderr, "opt-arg is not yet implemented.\n");
       }
       break;
-    default:
-      fprintf(stderr, "? invalid option:%x ?\n",c);
+    case 'p':  // printinfo
+      optflgs[0] = optflgs[1] = 1;
+      break;
+    case '?':
+      fprintf(stderr, "? unknown option: %c ?\n",c);
       break;
     }
   }
-  // option check ----
+  // option check end ----
   
   // main loop
   while(1){
@@ -154,11 +157,11 @@ int main(int argc, char*argv[]){
 	fprintf(stderr, "---help---\n");
 	fprintf(stderr, "-h        : show this.\n");
 	fprintf(stderr, "print opt : print 'opt'.\n");
-     	fprintf(stderr, "   opt    : rg, irg, frg, op, breakpoint, bp.\n");
+     	fprintf(stderr, "   opt    : rg, irg, frg, op, breakpoint(bp), exectime(et).\n");
 	fprintf(stderr, "list (n)  : show surrounding +-n ops (default&min 5).\n");
 	fprintf(stderr, "step (n)  : step n (default 1).\n");
 	fprintf(stderr, "break n   : set breakpoint.\n");
-        fprintf(stderr, "delete n  : delete nth breakpoint.\n");
+        fprintf(stderr, "delete n  : delete nth breakpoint. check print bp\n");
 	fprintf(stderr, "continue  : jump to next breakpoint or end.\n");
 	fprintf(stderr, "exit      : end simulator.\n");
 	ifPrintOp = 0; ifDebug = 0;
@@ -239,13 +242,12 @@ int main(int argc, char*argv[]){
       }
     }
     if(ifDebug>=0){ ifDebug--; }
-    //debug ----
-    
-    
-    //-- end with halt(beq r0 r0 r15 0)
+    // debug end ----
+
+    // end with halt(beq r0 r0 r15 0)
     if(op == 0x8001e000){ break; }
     
-    //---- countOp
+    //-- countOp
     usedOpCounter[cutoutOp(op,0,6)]++;
     execCounter++;
     
