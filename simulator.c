@@ -22,6 +22,7 @@ typedef union typechanger{
   float f;
 } typechanger;
 
+uint32_t memory[MEM_SIZE]={};
 
 //---------- main
 int main(int argc, char*argv[]){
@@ -31,7 +32,6 @@ int main(int argc, char*argv[]){
     return 1;
   }
   FILE *fp;
-  uint32_t memory[MEM_SIZE]={};
   int p_size;
   int i;
   if((fp=fopen(argv[1], "rb")) == NULL){
@@ -40,9 +40,9 @@ int main(int argc, char*argv[]){
   }
   p_size = fread(memory,sizeof(uint32_t),MEM_SIZE,fp);
   for(i = 0; i<p_size; i++) memory[i] = change_endian(memory[i]);
-  
-  
-  // 
+
+
+  // vars
   uint32_t op=0;
   uint32_t rgs[3];
   uint32_t option=0;
@@ -477,6 +477,9 @@ int main(int argc, char*argv[]){
     case 0b1110000: //read
       cutoffOp(op,rgs,&option,1);
       fread(&irg[rgs[0]].ch[0], sizeof(char), 1, input);
+      for(i=1;i<4;i++){
+	irg[rgs[0]].ch[i] = 0;
+      }
       break;
     case 0b1110001: //write
       cutoffOp(op,rgs,&option,1);
