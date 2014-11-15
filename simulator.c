@@ -46,7 +46,7 @@ int main(int argc, char*argv[]){
   uint32_t op=0;
   uint32_t rgs[3];
   uint32_t option=0;
-  int nextPC=0;
+  int nextPC=0,oldPC=0;
   typechanger irg[16]={}; // int register
   typechanger frg[16]={}; // float register
   FILE *input, *output;
@@ -253,6 +253,7 @@ int main(int argc, char*argv[]){
     
     //---- decode & exec
     nextPC = irg[15].i + 4;
+    oldPC  = irg[15].i;
 
     switch (cutoutOp(op,0,6)) { //0-6:opcode
       //--- ALU
@@ -262,9 +263,9 @@ int main(int argc, char*argv[]){
       break;
     case 0b0000001: //addi
       cutoffOp(op,rgs,&option,2);
-      if(((op>>16)&1) == 0)
+      if(((op>>16)&1) == 0) // L
 	irg[rgs[0]].i = irg[rgs[1]].i + utoi(option,16);
-      else
+      else                  // H
 	irg[rgs[0]].i = irg[rgs[1]].i + (utoi(option,16)<<16);
       break;
     case 0b0000010: //sub
@@ -336,7 +337,8 @@ int main(int argc, char*argv[]){
     case 0b0101010: //ftoi
       cutoffOp(op,rgs,&option,2);
       irg[rgs[0]].u = h_floor(frg[rgs[1]].u);
-      irg[rgs[0]].f = floorf(n_frg[rgs[1]].f);
+      //irg[rgs[0]].f = floorf(n_frg[rgs[1]].f);
+      irg[rgs[0]].f = (int)(n_frg[rgs[1]].f);
       break;
     case 0b0101100: //itof
       cutoffOp(op,rgs,&option,2);
@@ -429,11 +431,7 @@ int main(int argc, char*argv[]){
       //---- system
     case 0b1100000: //load
       cutoffOp(op,rgs,&option,2);
-
       irg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))/4];
-      if(rgs[0]==15){
-	nextPC = irg[rgs[0]].i;
-      }
       break;
     case 0b1100010: //store
       cutoffOp(op,rgs,&option,2);
@@ -454,9 +452,6 @@ int main(int argc, char*argv[]){
     case 0b1101000: //loadr
       cutoffOp(op,rgs,&option,3);
       irg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];
-      if(rgs[0]==15){
-	nextPC = irg[rgs[0]].i; //
-      }
       break;
     case 0b1101010: //storer
       cutoffOp(op,rgs,&option,2);
@@ -493,7 +488,7 @@ int main(int argc, char*argv[]){
     } // --end switch
 
     //---- end
-    irg[15].i = nextPC;
+    if(irg[15].i == oldPC){ irg[15].i = nextPC; }
   }
  
   // print infos

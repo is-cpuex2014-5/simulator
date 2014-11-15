@@ -55,6 +55,7 @@ int p_binary(uint32_t b,int digit){
 }
 int p_hexadecimal(uint32_t b){
   fprintf(stderr, "%x\n",b);
+  return 0;
 }
 
 //-- print opration in assembli
