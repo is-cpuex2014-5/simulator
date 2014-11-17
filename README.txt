@@ -15,8 +15,9 @@
 -n | --nativeFPU
 FPUをcの方で実行する。
 -n=[option]とすることで、その命令のみnativeにしないことが可能。
-a:add, s:sub, m:mul, d:div, q:sqrt, f:f2i, i:i2f, n:neg, v:inv
-ex. -n=fiv とするとf2i,i2f,finv以外がnative
+  a:add, s:sub, m:mul, d:div, q:sqrt,
+  f:f2i, i:i2f, n:neg, v:inv, e:bfeq, l:bflt
+  ex. -n=fiv とするとf2i,i2f,finv以外がnative
 
 -d | --debug (=file)
 デバッグモード。

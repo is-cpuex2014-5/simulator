@@ -74,7 +74,7 @@ int main(int argc, char*argv[]){
   long long int execCounter=0;
 
   //-- native FPU
-  int fpuflgs[10]={};
+  int fpuflgs[15]={};
 
   // initialize
   irg[0].i  = 0;       // 0 register
@@ -117,10 +117,11 @@ int main(int argc, char*argv[]){
       ifDebug=0;
       break;
     case 'n':  // nativeFPU
-      optflgs[3] = 1; // not use??
-      for(i=0;i<9;i++){ fpuflgs[i]=1; }
+      optflgs[3] = 1;
+      for(i=0;i<11;i++){ fpuflgs[i]=1; }
       if(optarg){
-	//Add,Sub,Mul,Div,sQrt,Ftoi,Itof,Neg,inV
+	//fprintf(stderr,"nativeFPU : %s\n",optarg);
+	//Add,Sub,Mul,Div,sQrt,Ftoi,Itof,Neg,inV,bfEq,bfLt
 	if(strchr(optarg,'a')!=NULL){ fpuflgs[0]=0; }
 	if(strchr(optarg,'s')!=NULL){ fpuflgs[1]=0; }
 	if(strchr(optarg,'m')!=NULL){ fpuflgs[2]=0; }
@@ -130,6 +131,8 @@ int main(int argc, char*argv[]){
 	if(strchr(optarg,'i')!=NULL){ fpuflgs[6]=0; }
 	if(strchr(optarg,'n')!=NULL){ fpuflgs[7]=0; }
 	if(strchr(optarg,'v')!=NULL){ fpuflgs[8]=0; }
+	if(strchr(optarg,'e')!=NULL){ fpuflgs[9]=0; }
+	if(strchr(optarg,'l')!=NULL){ fpuflgs[10]=0; }
 	// if(flg){ not native }
       }
       break;
@@ -410,7 +413,7 @@ int main(int argc, char*argv[]){
       break;
     case 0b1000100: //bfeq
       cutoffOp(op,rgs,&option,3);
-      if(!optflgs[3]){
+      if(!fpuflgs[9]){
 	if(feq(frg[rgs[0]].u, frg[rgs[1]].u)){
 	  nextPC = irg[rgs[2]].i + utoi(option,13);
 	}
@@ -422,7 +425,7 @@ int main(int argc, char*argv[]){
       break;
     case 0b1000101: //bfeqi
       cutoffOp(op,rgs,&option,2);
-      if(!optflgs[3]){
+      if(!fpuflgs[9]){
 	if(feq(frg[rgs[0]].u, frg[rgs[1]].u)){
 	  nextPC = utoi(option,17);
 	}
@@ -434,7 +437,7 @@ int main(int argc, char*argv[]){
       break;
     case 0b1000110: //bflt
       cutoffOp(op,rgs,&option,3);
-      if(!optflgs[3]){
+      if(!fpuflgs[10]){
 	if(flt(frg[rgs[0]].u, frg[rgs[1]].u)){
 	  nextPC = irg[rgs[2]].i + utoi(option,13);
 	}
@@ -446,7 +449,7 @@ int main(int argc, char*argv[]){
       break;
     case 0b1000111: //bflti
       cutoffOp(op,rgs,&option,2);
-      if(!optflgs[3]){
+      if(!fpuflgs[10]){
 	if(flt(frg[rgs[0]].u, frg[rgs[1]].u)){
 	  nextPC = utoi(option,17);
 	}
@@ -483,7 +486,7 @@ int main(int argc, char*argv[]){
       break;
     case 0b1101100: //floadr
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]].u   = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];
+      frg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];
       break;
     case 0b1101110: //fstorer
       cutoffOp(op,rgs,&option,2);
