@@ -15,6 +15,8 @@
 #define INIT_HP  (MEM_SIZE*2 / 3)
 //#define HALT 0x8001e000
 
+
+
 typedef union typechanger{
   uint32_t u;
   int32_t i;
@@ -68,11 +70,11 @@ int main(int argc, char*argv[]){
   int optflgs[10]={};
 
   //-- count used ops
-  int usedOpCounter[128]={};
-  int execCounter=0;
-  //-- native flu
-  typechanger n_frg[16]={};
+  long long int usedOpCounter[128]={};
+  long long int execCounter=0;
 
+  //-- native FPU
+  int fpuflgs[10]={};
 
   // initialize
   irg[0].i  = 0;       // 0 register
@@ -90,7 +92,7 @@ int main(int argc, char*argv[]){
     {"debug",     optional_argument, 0, 'd'},
     {"nativeFPU", optional_argument, 0, 'n'},
     {"printinfo", no_argument,       0, 'p'},
-    {0,           0,                 0, 0}
+    {0,           0,                 0, 0}  // endflg
   };
   while(1){
     c = getopt_long_only(argc,argv,"cd::n::p",
@@ -115,10 +117,20 @@ int main(int argc, char*argv[]){
       ifDebug=0;
       break;
     case 'n':  // nativeFPU
-      optflgs[3] = 1;
+      optflgs[3] = 1; // not use??
+      for(i=0;i<9;i++){ fpuflgs[i]=1; }
       if(optarg){
-	fprintf(stderr, "%s\n", optarg);
-	fprintf(stderr, "opt-arg is not yet implemented.\n");
+	//Add,Sub,Mul,Div,sQrt,Ftoi,Itof,Neg,inV
+	if(strchr(optarg,'a')!=NULL){ fpuflgs[0]=0; }
+	if(strchr(optarg,'s')!=NULL){ fpuflgs[1]=0; }
+	if(strchr(optarg,'m')!=NULL){ fpuflgs[2]=0; }
+	if(strchr(optarg,'d')!=NULL){ fpuflgs[3]=0; }
+	if(strchr(optarg,'q')!=NULL){ fpuflgs[4]=0; }
+	if(strchr(optarg,'f')!=NULL){ fpuflgs[5]=0; }
+	if(strchr(optarg,'i')!=NULL){ fpuflgs[6]=0; }
+	if(strchr(optarg,'n')!=NULL){ fpuflgs[7]=0; }
+	if(strchr(optarg,'v')!=NULL){ fpuflgs[8]=0; }
+	// if(flg){ not native }
       }
       break;
     case 'p':  // printinfo
@@ -171,26 +183,19 @@ int main(int argc, char*argv[]){
 	if(buf2==NULL || !strcmp(buf2,"rg")){
 	  fprintf(stderr, "irg[%d",irg[0].i);
 	  for(i=1;i<16;i++){ fprintf(stderr, ", %d",irg[i].i); }
-	  if(optflgs[3]){ // native FPU
-	    fprintf(stderr, "]\nn_frg[%f",n_frg[0].f);
-	    for(i=1;i<16;i++){ fprintf(stderr, ", %f",n_frg[i].f); }
-	  }
 	  fprintf(stderr, "]\nfrg[%f",frg[0].f);
 	  for(i=1;i<16;i++){ fprintf(stderr, ", %f",frg[i].f); }
 	  fprintf(stderr, "]\n");
 	} else if(!strcmp(buf2,"irg")) {
 	  fprintf(stderr, "irg[%d",irg[0].i); for(i=1;i<16;i++){ fprintf(stderr, ", %d",irg[i].i); } fprintf(stderr, "]\n");
 	} else if(!strcmp(buf2,"frg")) {
-	  if(optflgs[3]){ // native FPU
-	    fprintf(stderr, "n_frg[%f",n_frg[0].f); for(i=1;i<16;i++){ fprintf(stderr, ", %f",n_frg[i].f); } fprintf(stderr, "]\n");
-	  }
 	  fprintf(stderr, "frg[%f",frg[0].f); for(i=1;i<16;i++){ fprintf(stderr, ", %f",frg[i].f); } fprintf(stderr, "]\n");
 	} else if(!strcmp(buf2,"op")) {
 	  fprintf(stderr, "PC: %05d\n",irg[15].i); print_op(op);
 	} else if(!strcmp(buf2,"breakpoint") || !strcmp(buf2,"bp")) {
 	  show_array(breakpoints, 10);
 	} else if(!strcmp(buf2,"exectime") || !strcmp(buf2,"et")) {
-	  fprintf(stderr, "%d time.\n",execCounter);
+	  fprintf(stderr, "%lld time.\n",execCounter);
 	} else {
 	  //fprintf(stderr, "print what?\n");
 	}
@@ -311,49 +316,72 @@ int main(int argc, char*argv[]){
       //--- FPU
     case 0b0100000: //fadd
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]].u = fadd(frg[rgs[1]].u, frg[rgs[2]].u);
-      n_frg[rgs[0]].f = n_frg[rgs[1]].f + n_frg[rgs[2]].f;
+      if(!fpuflgs[0]){
+	frg[rgs[0]].u = fadd(frg[rgs[1]].u, frg[rgs[2]].u);
+      } else {
+	frg[rgs[0]].f = frg[rgs[1]].f + frg[rgs[2]].f;
+      }
       break;
     case 0b0100010: //fsub
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]].u = fsub(frg[rgs[1]].u, frg[rgs[2]].u);
-      n_frg[rgs[0]].f = n_frg[rgs[1]].f - n_frg[rgs[2]].f;
+      if(!fpuflgs[1]){
+	frg[rgs[0]].u = fsub(frg[rgs[1]].u, frg[rgs[2]].u);
+      } else {
+	frg[rgs[0]].f = frg[rgs[1]].f - frg[rgs[2]].f;
+      }
       break;
     case 0b0100100: //fmul
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]].u = fmul(frg[rgs[1]].u, frg[rgs[2]].u);
-      n_frg[rgs[0]].f = n_frg[rgs[1]].f * n_frg[rgs[2]].f;
+      if(!fpuflgs[2]){
+	frg[rgs[0]].u = fmul(frg[rgs[1]].u, frg[rgs[2]].u);
+      } else {
+	frg[rgs[0]].f = frg[rgs[1]].f * frg[rgs[2]].f;
+      }
       break;
     case 0b0100110: //fdiv
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]].u = fdiv(frg[rgs[1]].u, frg[rgs[2]].u);
-      n_frg[rgs[0]].f = n_frg[rgs[1]].f / n_frg[rgs[2]].f;
+      if(!fpuflgs[3]){
+	frg[rgs[0]].u = fdiv(frg[rgs[1]].u, frg[rgs[2]].u);
+      } else {
+	frg[rgs[0]].f = frg[rgs[1]].f / frg[rgs[2]].f;
+      }
       break;
     case 0b0101000: //fsqrt
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]].u = fsqrt(frg[rgs[1]].u);
-      n_frg[rgs[0]].f = sqrtf(n_frg[rgs[1]].f);
+      if(!fpuflgs[4]){
+	frg[rgs[0]].u = fsqrt(frg[rgs[1]].u);
+      } else {
+	frg[rgs[0]].f = sqrtf(frg[rgs[1]].f);
+      }
       break;
     case 0b0101010: //ftoi
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]].u = h_floor(frg[rgs[1]].u);
-      //irg[rgs[0]].f = floorf(n_frg[rgs[1]].f);
-      irg[rgs[0]].f = (int)(n_frg[rgs[1]].f);
+      if(!fpuflgs[5]){
+	irg[rgs[0]].u = h_floor(frg[rgs[1]].u);
+      } else {
+	//irg[rgs[0]].i = floorf(frg[rgs[1]].f);
+	irg[rgs[0]].i = (int)(frg[rgs[1]].f);
+      }
       break;
     case 0b0101100: //itof
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]].u = h_i2f(irg[rgs[1]].u);
-      n_frg[rgs[0]].f = (float)irg[rgs[1]].i;
+      if(!fpuflgs[6]){
+	frg[rgs[0]].u = h_i2f(irg[rgs[1]].u);
+      } else {
+	frg[rgs[0]].f = (float)irg[rgs[1]].i;
+      }
       break;
     case 0b0101110: //fneg  //not yet
       cutoffOp(op,rgs,&option,2);
       frg[rgs[0]].f = -frg[rgs[1]].f;
-      n_frg[rgs[0]].f = -n_frg[rgs[1]].f;
       break;
     case 0b0110000: //finv
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]].u = finv(frg[rgs[1]].u);
-      n_frg[rgs[0]].f = 1 / n_frg[rgs[1]].f;
+      if(!fpuflgs[8]){
+	frg[rgs[0]].u = finv(frg[rgs[1]].u);
+      } else {
+	frg[rgs[0]].f = 1 / frg[rgs[1]].f;
+      }
       break;
       //--- branch
     case 0b1000000: //beq
@@ -387,7 +415,7 @@ int main(int argc, char*argv[]){
 	  nextPC = irg[rgs[2]].i + utoi(option,13);
 	}
       } else {
-	if(n_frg[rgs[0]].f == n_frg[rgs[1]].f){
+	if(frg[rgs[0]].f == frg[rgs[1]].f){
 	  nextPC = irg[rgs[2]].i + utoi(option,13);
 	}
       }
@@ -399,7 +427,7 @@ int main(int argc, char*argv[]){
 	  nextPC = utoi(option,17);
 	}
       } else {	
-	if(n_frg[rgs[0]].f == n_frg[rgs[1]].f){
+	if(frg[rgs[0]].f == frg[rgs[1]].f){
 	  nextPC = utoi(option,17);
 	}
       }
@@ -411,7 +439,7 @@ int main(int argc, char*argv[]){
 	  nextPC = irg[rgs[2]].i + utoi(option,13);
 	}
       } else {
-	if(n_frg[rgs[0]].f < n_frg[rgs[1]].f){
+	if(frg[rgs[0]].f < frg[rgs[1]].f){
 	  nextPC = irg[rgs[2]].i + utoi(option,13);
 	}
       }
@@ -423,7 +451,7 @@ int main(int argc, char*argv[]){
 	  nextPC = utoi(option,17);
 	}
       } else {
-	if(n_frg[rgs[0]].f < n_frg[rgs[1]].f){
+	if(frg[rgs[0]].f < frg[rgs[1]].f){
 	  nextPC = utoi(option,17);
 	}
       }
@@ -440,14 +468,10 @@ int main(int argc, char*argv[]){
     case 0b1100100: //fload
       cutoffOp(op,rgs,&option,2);
       frg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))/4];
-      n_frg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))/4];
       break;
     case 0b1100110: //fstore
       cutoffOp(op,rgs,&option,2);
       memory[(irg[rgs[1]].i + utoi(option,17))/4] = frg[rgs[0]].u;
-      if(optflgs[3]){
-	memory[(irg[rgs[1]].i + utoi(option,17))/4] = n_frg[rgs[0]].u;
-      }
       break;
     case 0b1101000: //loadr
       cutoffOp(op,rgs,&option,3);
@@ -460,14 +484,10 @@ int main(int argc, char*argv[]){
     case 0b1101100: //floadr
       cutoffOp(op,rgs,&option,2);
       frg[rgs[0]].u   = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];
-      n_frg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];      
       break;
     case 0b1101110: //fstorer
       cutoffOp(op,rgs,&option,2);
       memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4] = frg[rgs[0]].u;
-      if(optflgs[3]){
-	memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4] = n_frg[rgs[0]].u;
-      }
       break;
     case 0b1110000: //read
       cutoffOp(op,rgs,&option,1);
@@ -495,16 +515,12 @@ int main(int argc, char*argv[]){
   if(optflgs[0]){ // print rg
     fprintf(stderr, "irg[%d",irg[0].i);
     for(i=1;i<16;i++){ fprintf(stderr, ", %d",irg[i].i); }
-    if(optflgs[3]){ // native FPU
-      fprintf(stderr, "]\nn_frg[%f",n_frg[0].f);
-      for(i=1;i<16;i++){ fprintf(stderr, ", %f",n_frg[i].f); }
-    }
     fprintf(stderr, "]\nfrg[%f",frg[0].f);
     for(i=1;i<16;i++){ fprintf(stderr, ", %f",frg[i].f); }
     fprintf(stderr, "]\n");
   }
   if(optflgs[1]){ // total exec
-    fprintf(stderr, "%d oprations\n",execCounter);
+    fprintf(stderr, "%lld oprations\n",execCounter);
   }
   if(optflgs[2]){ // count op
     print_countOp(usedOpCounter);

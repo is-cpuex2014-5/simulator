@@ -24,6 +24,6 @@ int add_array(int*, int, int);
 void del_array(int*, int);
 void show_array(int*, int);
 
-void print_countOp(int*);
+void print_countOp(long long int*);
 
 #endif

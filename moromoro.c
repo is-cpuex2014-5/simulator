@@ -326,7 +326,7 @@ void show_array(int*ar, int ln){
 // for debugger ----
 
 //---- for op counter
-void print_countOp(int*count){
+void print_countOp(long long int*count){
   int flg=1,mid,i;
   while(flg){
     mid=0;
@@ -372,7 +372,7 @@ void print_countOp(int*count){
       case 0b1110001: fprintf(stderr, "write  :"); break;
       default:        fprintf(stderr, "invalid:"); break;
       }
-      fprintf(stderr, " %d times.\n",count[mid]);
+      fprintf(stderr, " %lld times.\n",count[mid]);
       count[mid] = 0;
     } else {
       flg = 0;

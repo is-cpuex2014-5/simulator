@@ -14,7 +14,9 @@
 
 -n | --nativeFPU
 FPUをcの方で実行する。
-元の方のも実行して保持してあるがmemory命令はまだなので意味は薄い。
+-n=[option]とすることで、その命令のみnativeにしないことが可能。
+a:add, s:sub, m:mul, d:div, q:sqrt, f:f2i, i:i2f, n:neg, v:inv
+ex. -n=fiv とするとf2i,i2f,finv以外がnative
 
 -d | --debug (=file)
 デバッグモード。
@@ -27,6 +29,10 @@ FPUをcの方で実行する。
 
 
 更新履歴：
+11/17/17:40/native fix
+optionで個別命令をnot nativeにできるように
+元の方保存を消去。
+
 11/16/2:30/fix PC
 PCの変更方法を刷新。
 
