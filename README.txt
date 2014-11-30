@@ -14,7 +14,7 @@
 
 -n | --nativeFPU
 FPUをcの方で実行する。
--n=[option]とすることで、その命令のみnativeにしないことが可能。
+-n=[option]とすることで、各命令をFPU実行にできる。
   a:add, s:sub, m:mul, d:div, q:sqrt,
   f:f2i, i:i2f, n:neg, v:inv, e:bfeq, l:bflt
   ex. -n=fiv とするとf2i,i2f,finv以外がnative
@@ -30,6 +30,9 @@ FPUをcの方で実行する。
 
 
 更新履歴：
+12/01/1:30/some fix
+load/storeのレジスタ型周りのバグとり
+
 11/17/17:40/native fix
 optionで個別命令をnot nativeにできるように
 元の方保存を消去。

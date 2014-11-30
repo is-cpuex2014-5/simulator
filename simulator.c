@@ -28,6 +28,9 @@ uint32_t memory[MEM_SIZE]={};
 
 //---------- main
 int main(int argc, char*argv[]){
+
+  
+
   // open&read program file
   if(argc<2){
     fprintf(stderr, "too few args.");
@@ -481,15 +484,15 @@ int main(int argc, char*argv[]){
       irg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];
       break;
     case 0b1101010: //storer
-      cutoffOp(op,rgs,&option,2);
+      cutoffOp(op,rgs,&option,3);
       memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4] = irg[rgs[0]].u;
       break;
     case 0b1101100: //floadr
-      cutoffOp(op,rgs,&option,2);
+      cutoffOp(op,rgs,&option,3);
       frg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];
       break;
     case 0b1101110: //fstorer
-      cutoffOp(op,rgs,&option,2);
+      cutoffOp(op,rgs,&option,3);
       memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4] = frg[rgs[0]].u;
       break;
     case 0b1110000: //read

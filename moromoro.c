@@ -30,7 +30,7 @@ uint32_t change_endian(uint32_t u){
   return e.u;
 }
 
-//-- uint -> int
+//-- regard uint(lower digit bits) as int
 int utoi(uint32_t u, int digit){
   if(digit<2 || digit>32) {
     fprintf(stderr, "error@utoi invalid input.");
@@ -368,6 +368,10 @@ void print_countOp(long long int*count){
       case 0b1100010: fprintf(stderr, "store  :"); break;
       case 0b1100100: fprintf(stderr, "fload  :"); break;
       case 0b1100110: fprintf(stderr, "fstore :"); break;
+      case 0b1101000: fprintf(stderr, "loadr  :"); break;
+      case 0b1101010: fprintf(stderr, "storer :"); break;
+      case 0b1101100: fprintf(stderr, "floadr :"); break;
+      case 0b1101110: fprintf(stderr, "fstorer:"); break;
       case 0b1110000: fprintf(stderr, "read   :"); break;
       case 0b1110001: fprintf(stderr, "write  :"); break;
       default:        fprintf(stderr, "invalid:"); break;
