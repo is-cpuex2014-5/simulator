@@ -16,7 +16,6 @@
 //#define HALT 0x8001e000
 
 
-
 typedef union typechanger{
   uint32_t u;
   int32_t i;
@@ -58,6 +57,7 @@ int main(int argc, char*argv[]){
 
   //
   int tmp;
+  char tmp_s[100];
 
   //-- debug
   int ifDebug=-1;
@@ -70,6 +70,7 @@ int main(int argc, char*argv[]){
   //-- options
   //---- 0:print rg, 1:print total exec, 2:count op,
   //---- 3:native FPU, 4:exist debug input,
+  //---- 5:dis-assembl
   int optflgs[10]={};
 
   //-- count used ops
@@ -91,18 +92,22 @@ int main(int argc, char*argv[]){
   int c;
   int optionIndex;
   static struct option long_options[]={
-    {"countop",   no_argument,       0, 'c'},
-    {"debug",     optional_argument, 0, 'd'},
-    {"nativeFPU", optional_argument, 0, 'n'},
-    {"printinfo", no_argument,       0, 'p'},
+    {"countop",    no_argument,       0, 'c'},
+    {"debug",      optional_argument, 0, 'd'},
+    {"nativeFPU",  optional_argument, 0, 'n'},
+    {"printinfo",  no_argument,       0, 'p'},
+    {"disassembl", no_argument,       0, 'a'},
     {0,           0,                 0, 0}  // endflg
   };
   while(1){
-    c = getopt_long_only(argc,argv,"cd::n::p",
+    c = getopt_long_only(argc,argv,"acd::n::p",
 			 long_options, &optionIndex);
     if(c<0){ break; }
     switch(c){
     case 0: break;
+    case 'a':  //dis-assembl
+      optflgs[5]=1;
+      break;
     case 'c':  // countop
       optflgs[1] = optflgs[2] = 1;
       break;
@@ -149,6 +154,24 @@ int main(int argc, char*argv[]){
   }
   // option check end ----
   
+  //dis-assembl
+  if(optflgs[5]){
+    FILE*fasm;
+    if((fasm=fopen("./disassembled.txt", "w")) == NULL){
+      fprintf(stderr, "err@opening %s\n",argv[1]);
+      return 1;
+    }
+    i=0;
+    while((op=memory[i]) != 0x8001e000){
+      fprintf(fasm, "%05d: ", i*4);
+      disassembl(op, tmp_s);
+      fprintf(fasm, "%s", tmp_s);      
+      i++;
+    }
+    fprintf(fasm,"%05d: beq\tr0\tr0\tr15 0\n", i*4);
+    return 0;
+  }
+
   // main loop
   while(1){
     //---- fetch
@@ -165,7 +188,7 @@ int main(int argc, char*argv[]){
       if(ifPrintOp){
 	fprintf(stderr, "%05d: ",irg[15].i);
 	//p_binary(op,32);
-	print_op(op);
+	print_op(op, tmp_s);
       } ifPrintOp = 1;
 
       fgets(buf1,100,stdin);
@@ -197,7 +220,7 @@ int main(int argc, char*argv[]){
 	} else if(!strcmp(buf2,"frg")) {
 	  fprintf(stderr, "frg[%f",frg[0].f); for(i=1;i<16;i++){ fprintf(stderr, ", %f",frg[i].f); } fprintf(stderr, "]\n");
 	} else if(!strcmp(buf2,"op")) {
-	  fprintf(stderr, "PC: %05d\n",irg[15].i); print_op(op);
+	  fprintf(stderr, "PC: %05d\n",irg[15].i); print_op(op, tmp_s);
 	} else if(!strcmp(buf2,"breakpoint") || !strcmp(buf2,"bp")) {
 	  show_array(breakpoints, 10);
 	} else if(!strcmp(buf2,"exectime") || !strcmp(buf2,"et")) {
@@ -213,7 +236,7 @@ int main(int argc, char*argv[]){
 	else { tmp = max(5,atoi(buf2)); }
 	for(i=max(INIT_PC,irg[15].i-tmp*4);i<=min(INIT_HP,irg[15].i+tmp*4);i+=4){
 	  fprintf(stderr, "%05d: ",i);
-	  print_op(memory[i/4]);
+	  print_op(memory[i/4], tmp_s);
 	}
 	ifPrintOp = 0; ifDebug = 0;
 	continue;

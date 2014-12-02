@@ -13,11 +13,12 @@
 終了時に命令実行数と各命令毎の実行数を吐く
 
 -n | --nativeFPU
-FPUをcの方で実行する。
+FPUをnative(cの方)で実行する。
 -n=[option]とすることで、各命令をFPU実行にできる。
+  options: asmdqfinvel
   a:add, s:sub, m:mul, d:div, q:sqrt,
   f:f2i, i:i2f, n:neg, v:inv, e:bfeq, l:bflt
-  ex. -n=fiv とするとf2i,i2f,finv以外がnative
+  ex. -n=fiv とするとf2i,i2f,finv「以外」がnative
 
 -d | --debug (=file)
 デバッグモード。
@@ -27,9 +28,16 @@ FPUをcの方で実行する。
 ・--prとか-prとか--pとかも認識する（これは全てprintinfoになる）。
 ・-cpdなどとまとめられる（各オプション1文字）。
 
+-a | --disassembl
+./disassembled.txtにアセンブリ化したのを吐いて終了する。
+他のオプションは無視する。
 
 
 更新履歴：
+12/02/14:00/disassembler
+option disassemblを実装
+それに伴ってprint_opが仕様変更されてる
+
 12/01/1:30/some fix
 load/storeのレジスタ型周りのバグとり
 
