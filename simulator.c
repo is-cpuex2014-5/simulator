@@ -15,7 +15,7 @@
 #define INIT_HP  (MEM_SIZE*2 / 3)
 //#define HALT 0x8001e000
 
-
+extern void fprint_binary (FILE*,const uint32_t a);
 
 typedef union typechanger{
   uint32_t u;
@@ -78,6 +78,10 @@ int main(int argc, char*argv[]){
 
   //-- native FPU
   int fpuflgs[15]={};
+
+  //-- FPU dump
+  int fpudump[15]={};
+  fpudump[0] = 1;
 
   // initialize
   irg[0].i  = 0;       // 0 register
@@ -323,7 +327,17 @@ int main(int argc, char*argv[]){
     case 0b0100000: //fadd
       cutoffOp(op,rgs,&option,3);
       if(!fpuflgs[0]){
+	if (fpudump[0]) {
+	  fprint_binary(stderr,frg[rgs[1]].u);
+	  putc ('\t',stderr);
+	  fprint_binary(stderr,frg[rgs[2]].u);
+	  putc ('\t',stderr);
+	}
 	frg[rgs[0]].u = fadd(frg[rgs[1]].u, frg[rgs[2]].u);
+	if (fpudump[0]) {
+	  fprint_binary(stderr,frg[rgs[0]].u);
+	  fprintf (stderr,"\t#fadd\n");
+	}
       } else {
 	frg[rgs[0]].f = frg[rgs[1]].f + frg[rgs[2]].f;
       }
@@ -331,7 +345,17 @@ int main(int argc, char*argv[]){
     case 0b0100010: //fsub
       cutoffOp(op,rgs,&option,3);
       if(!fpuflgs[1]){
+	if (fpudump[1]) {
+	  fprint_binary(stderr,frg[rgs[1]].u);
+	  putc ('\t',stderr);
+	  fprint_binary(stderr,frg[rgs[2]].u);
+	  putc ('\t',stderr);
+	}
 	frg[rgs[0]].u = fsub(frg[rgs[1]].u, frg[rgs[2]].u);
+	if (fpudump[1]) {
+	  fprint_binary(stderr,frg[rgs[0]].u);
+	  fprintf (stderr,"\t#fsub\n");
+	}
       } else {
 	frg[rgs[0]].f = frg[rgs[1]].f - frg[rgs[2]].f;
       }
@@ -339,7 +363,17 @@ int main(int argc, char*argv[]){
     case 0b0100100: //fmul
       cutoffOp(op,rgs,&option,3);
       if(!fpuflgs[2]){
+	if (fpudump[2]) {
+	  fprint_binary(stderr,frg[rgs[1]].u);
+	  putc ('\t',stderr);
+	  fprint_binary(stderr,frg[rgs[2]].u);
+	  putc ('\t',stderr);
+	}
 	frg[rgs[0]].u = fmul(frg[rgs[1]].u, frg[rgs[2]].u);
+	if (fpudump[2]) {
+	  fprint_binary(stderr,frg[rgs[0]].u);
+	  fprintf (stderr,"\t#fmul\n");
+	}
       } else {
 	frg[rgs[0]].f = frg[rgs[1]].f * frg[rgs[2]].f;
       }
@@ -347,7 +381,17 @@ int main(int argc, char*argv[]){
     case 0b0100110: //fdiv
       cutoffOp(op,rgs,&option,3);
       if(!fpuflgs[3]){
+	if (fpudump[3]) {
+	  fprint_binary(stderr,frg[rgs[1]].u);
+	  putc ('\t',stderr);
+	  fprint_binary(stderr,frg[rgs[2]].u);
+	  putc ('\t',stderr);
+	}
 	frg[rgs[0]].u = fdiv(frg[rgs[1]].u, frg[rgs[2]].u);
+	if (fpudump[3]) {
+	  fprint_binary(stderr,frg[rgs[0]].u);
+	  fprintf (stderr,"\t#fdiv\n");
+	}
       } else {
 	frg[rgs[0]].f = frg[rgs[1]].f / frg[rgs[2]].f;
       }
@@ -355,7 +399,15 @@ int main(int argc, char*argv[]){
     case 0b0101000: //fsqrt
       cutoffOp(op,rgs,&option,2);
       if(!fpuflgs[4]){
+	if (fpudump[4]) {
+	  fprint_binary(stderr,frg[rgs[1]].u);
+	  putc ('\t',stderr);
+	}
 	frg[rgs[0]].u = fsqrt(frg[rgs[1]].u);
+	if (fpudump[4]) {
+	  fprint_binary(stderr,frg[rgs[0]].u);
+	  fprintf (stderr,"\t#fsqrt\n");
+	}
       } else {
 	frg[rgs[0]].f = sqrtf(frg[rgs[1]].f);
       }
@@ -363,7 +415,15 @@ int main(int argc, char*argv[]){
     case 0b0101010: //ftoi
       cutoffOp(op,rgs,&option,2);
       if(!fpuflgs[5]){
+	if (fpudump[5]) {
+	  fprint_binary(stderr,frg[rgs[1]].u);
+	  putc ('\t',stderr);
+	}
 	irg[rgs[0]].u = h_floor(frg[rgs[1]].u);
+	if (fpudump[5]) {
+	  fprint_binary(stderr,irg[rgs[0]].u);
+	  fprintf (stderr,"\t#ftoi\n");
+	}
       } else {
 	//irg[rgs[0]].i = floorf(frg[rgs[1]].f);
 	irg[rgs[0]].i = (int)(frg[rgs[1]].f);
@@ -372,7 +432,15 @@ int main(int argc, char*argv[]){
     case 0b0101100: //itof
       cutoffOp(op,rgs,&option,2);
       if(!fpuflgs[6]){
+	if (fpudump[6]) {
+	  fprint_binary(stderr,irg[rgs[1]].u);
+	  putc ('\t',stderr);
+	}
 	frg[rgs[0]].u = h_i2f(irg[rgs[1]].u);
+	if (fpudump[6]) {
+	  fprint_binary(stderr,frg[rgs[0]].u);
+	  fprintf (stderr,"\t#itof\n");
+	}
       } else {
 	frg[rgs[0]].f = (float)irg[rgs[1]].i;
       }
@@ -384,7 +452,15 @@ int main(int argc, char*argv[]){
     case 0b0110000: //finv
       cutoffOp(op,rgs,&option,2);
       if(!fpuflgs[8]){
+	if (fpudump[8]) {
+	  fprint_binary(stderr,frg[rgs[1]].u);
+	  putc ('\t',stderr);
+	}
 	frg[rgs[0]].u = finv(frg[rgs[1]].u);
+	if (fpudump[8]) {
+	  fprint_binary(stderr,frg[rgs[0]].u);
+	  fprintf (stderr,"\t#finv\n");
+	}
       } else {
 	frg[rgs[0]].f = 1 / frg[rgs[1]].f;
       }
