@@ -69,6 +69,7 @@ void print_op(uint32_t op, char*st){
 void disassembl(uint32_t op, char*st){
   uint32_t rgs[3];
   uint32_t option=0;
+  uint32_t lr;
   switch(cutoutOp(op,0,6)){
     //--- ALU
   case 0b0000000: //add
@@ -77,7 +78,10 @@ void disassembl(uint32_t op, char*st){
     break;
   case 0b0000001: //addi
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "addi\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
+    if(((op>>16)&1) == 0)
+      sprintf(st, "addil\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,16));
+    else
+      sprintf(st, "addih\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,16));
     break;
   case 0b0000010: //sub
     cutoffOp(op,rgs,&option,3);
@@ -113,30 +117,30 @@ void disassembl(uint32_t op, char*st){
     break;
   case 0b0010000: //shift
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "shift\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]);
-    if(cutoutOp(op,24,24)){
-      strcat(st, "\tr");
-    } else { strcat(st, "\tl"); }
+    lr = cutoutOp(op,24,24);
     if(cutoutOp(op,25,26)==0){
-      strcat(st, "-arith\n");
+      if(lr){ sprintf(st, "sra\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
+      else  { sprintf(st, "sla\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
     } else if(cutoutOp(op,25,26)==1){
-      strcat(st, "-logic\n");
+      if(lr){ sprintf(st, "srl\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
+      else  { sprintf(st, "sll\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
     } else {
-      strcat(st, "-rotate\n");
+      if(lr){ sprintf(st, "srr\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
+      else  { sprintf(st, "slr\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
     }
     break;
   case 0b0010001: //shifti
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "shifti\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6));
-    if(cutoutOp(op,24,24)){
-      strcat(st, "\tr");
-    } else { strcat(st, "\tl"); }
+    lr = cutoutOp(op,24,24);
     if(cutoutOp(op,25,26)==0){
-      strcat(st, "-arith\n");
+      if(lr){ sprintf(st, "srai\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
+      else  { sprintf(st, "slai\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
     } else if(cutoutOp(op,25,26)==1){
-      strcat(st, "-logic\n");
+      if(lr){ sprintf(st, "srli\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
+      else  { sprintf(st, "slli\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
     } else {
-      strcat(st, "-rotate\n");
+      if(lr){ sprintf(st, "srri\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
+      else  { sprintf(st, "slri\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
     }
     break;
     //--- FLU

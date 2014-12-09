@@ -9,7 +9,7 @@
 #include "moromoro.h"
 #include "fpu.h"
 
-#define MEM_SIZE  300000 // actually how much?
+#define MEM_SIZE  300000 // actually what?
 #define INIT_PC   0
 #define INIT_SP  (MEM_SIZE   / 3)
 #define INIT_HP  (MEM_SIZE*2 / 3)
@@ -27,9 +27,6 @@ uint32_t memory[MEM_SIZE]={};
 
 //---------- main
 int main(int argc, char*argv[]){
-
-  
-
   // open&read program file
   if(argc<2){
     fprintf(stderr, "too few args.");
@@ -70,7 +67,7 @@ int main(int argc, char*argv[]){
   //-- options
   //---- 0:print rg, 1:print total exec, 2:count op,
   //---- 3:native FPU, 4:exist debug input,
-  //---- 5:dis-assembl
+  //---- 5:dis-assembl 6:disass-continue
   int optflgs[10]={};
 
   //-- count used ops
@@ -96,17 +93,18 @@ int main(int argc, char*argv[]){
     {"debug",      optional_argument, 0, 'd'},
     {"nativeFPU",  optional_argument, 0, 'n'},
     {"printinfo",  no_argument,       0, 'p'},
-    {"disassembl", no_argument,       0, 'a'},
+    {"disassembl", optional_argument, 0, 'a'},
     {0,           0,                 0, 0}  // endflg
   };
   while(1){
-    c = getopt_long_only(argc,argv,"acd::n::p",
+    c = getopt_long_only(argc,argv,"a::cd::n::p",
 			 long_options, &optionIndex);
     if(c<0){ break; }
     switch(c){
     case 0: break;
     case 'a':  //dis-assembl
       optflgs[5]=1;
+      if(optarg){ optflgs[6]=1; }
       break;
     case 'c':  // countop
       optflgs[1] = optflgs[2] = 1;
@@ -168,8 +166,8 @@ int main(int argc, char*argv[]){
       fprintf(fasm, "%s", tmp_s);      
       i++;
     }
-    fprintf(fasm,"%05d: beq\tr0\tr0\tr15 0\n", i*4);
-    return 0;
+    fprintf(fasm,"%05d: beq\tr0\tr0\tr15\t0\n", i*4);
+    if(!optflgs[6]){ return 0; } //continue?
   }
 
   // main loop
