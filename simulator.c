@@ -67,15 +67,18 @@ int main(int argc, char*argv[]){
   //-- options
   //---- 0:print rg, 1:print total exec, 2:count op,
   //---- 3:native FPU, 4:exist debug input,
-  //---- 5:dis-assembl 6:disass-continue
+  //---- 5:dis-assembl, 6:disass-continue
+  //---- 7:reg_dump, 8:reg_dump_output
   int optflgs[10]={};
 
   //-- count used ops
   long long int usedOpCounter[128]={};
   long long int execCounter=0;
-
   //-- native FPU
   int fpuflgs[15]={};
+  //-- regdump
+  FILE*rdout = stderr;
+
 
   // initialize
   irg[0].i  = 0;       // 0 register
@@ -94,10 +97,11 @@ int main(int argc, char*argv[]){
     {"nativeFPU",  optional_argument, 0, 'n'},
     {"printinfo",  no_argument,       0, 'p'},
     {"disassembl", optional_argument, 0, 'a'},
+    {"regdump",    optional_argument, 0, 'r'},
     {0,           0,                 0, 0}  // endflg
   };
   while(1){
-    c = getopt_long_only(argc,argv,"a::cd::n::p",
+    c = getopt_long_only(argc,argv,"a::cd::n::pr",
 			 long_options, &optionIndex);
     if(c<0){ break; }
     switch(c){
@@ -145,6 +149,17 @@ int main(int argc, char*argv[]){
     case 'p':  // printinfo
       optflgs[0] = optflgs[1] = 1;
       break;
+    case 'r':  // regdump
+      optflgs[7] = 1;
+      if(optarg){
+	fprintf(stderr, "regdump output to: %s\n", optarg);
+	if((rdout=fopen(optarg,"w"))==NULL){
+	  fprintf(stderr, "err@opening %s\n", optarg);
+	  return 1;
+	}
+	optflgs[8]=1;
+      }
+      break;
     case '?':
       fprintf(stderr, "? unknown option: %c ?\n",c);
       break;
@@ -152,7 +167,7 @@ int main(int argc, char*argv[]){
   }
   // option check end ----
   
-  //dis-assembl
+  // dis-assembl
   if(optflgs[5]){
     FILE*fasm;
     if((fasm=fopen("./disassembled.txt", "w")) == NULL){
@@ -169,6 +184,7 @@ int main(int argc, char*argv[]){
     fprintf(fasm,"%05d: beq\tr0\tr0\tr15\t0\n", i*4);
     if(!optflgs[6]){ return 0; } //continue?
   }
+  // dis-assembl end ----
 
   // main loop
   while(1){
@@ -185,8 +201,8 @@ int main(int argc, char*argv[]){
     if(!ifDebug || breakflg){
       if(ifPrintOp){
 	fprintf(stderr, "%05d: ",irg[15].i);
-	//p_binary(op,32);
-	print_op(op, tmp_s);
+	//p_binary(op,stderr);
+	print_op(op);
       } ifPrintOp = 1;
 
       fgets(buf1,100,stdin);
@@ -218,7 +234,7 @@ int main(int argc, char*argv[]){
 	} else if(!strcmp(buf2,"frg")) {
 	  fprintf(stderr, "frg[%f",frg[0].f); for(i=1;i<16;i++){ fprintf(stderr, ", %f",frg[i].f); } fprintf(stderr, "]\n");
 	} else if(!strcmp(buf2,"op")) {
-	  fprintf(stderr, "PC: %05d\n",irg[15].i); print_op(op, tmp_s);
+	  fprintf(stderr, "PC: %05d\n",irg[15].i); print_op(op);
 	} else if(!strcmp(buf2,"breakpoint") || !strcmp(buf2,"bp")) {
 	  show_array(breakpoints, 10);
 	} else if(!strcmp(buf2,"exectime") || !strcmp(buf2,"et")) {
@@ -234,7 +250,7 @@ int main(int argc, char*argv[]){
 	else { tmp = max(5,atoi(buf2)); }
 	for(i=max(INIT_PC,irg[15].i-tmp*4);i<=min(INIT_HP,irg[15].i+tmp*4);i+=4){
 	  fprintf(stderr, "%05d: ",i);
-	  print_op(memory[i/4], tmp_s);
+	  print_op(memory[i/4]);
 	}
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
@@ -530,9 +546,80 @@ int main(int argc, char*argv[]){
     default:
       fprintf(stderr, "invalid opration??\n");
       fprintf(stderr, "%05d :", irg[15].i);
-      p_binary(op,32);
+      p_binary(op,stderr);
       break;
     } // --end switch
+
+    //-- rgdump
+    if(optflgs[7]){
+      fprintf(rdout,"%05d: ",oldPC);
+      switch(cutoutOp(op,0,6)){
+      case 0b0000000: fprintf(rdout, "add    : "); break;
+      case 0b0000001: fprintf(rdout, "addi   : "); break;
+      case 0b0000010: fprintf(rdout, "sub    : "); break;
+      case 0b0000011: fprintf(rdout, "subi   : "); break;
+      case 0b0000100: fprintf(rdout, "not    : "); break;
+      case 0b0000110: fprintf(rdout, "and    : "); break;
+      case 0b0001000: fprintf(rdout, "or     : "); break;
+      case 0b0001010: fprintf(rdout, "xor    : "); break;
+      case 0b0001100: fprintf(rdout, "nand   : "); break;
+      case 0b0001110: fprintf(rdout, "nor    : "); break;
+      case 0b0010000: fprintf(rdout, "shift  : "); break;
+      case 0b0010001: fprintf(rdout, "shifti : "); break;
+      case 0b0100000: fprintf(rdout, "fadd   : "); break;
+      case 0b0100010: fprintf(rdout, "fsub   : "); break;
+      case 0b0100100: fprintf(rdout, "fmul   : "); break;
+      case 0b0100110: fprintf(rdout, "fdiv   : "); break;
+      case 0b0101000: fprintf(rdout, "fsqrt  : "); break;
+      case 0b0101010: fprintf(rdout, "ftoi   : "); break;
+      case 0b0101100: fprintf(rdout, "itof   : "); break;
+      case 0b0101110: fprintf(rdout, "fneg   : "); break;
+      case 0b0110000: fprintf(rdout, "finv   : "); break;
+      case 0b1000000: fprintf(rdout, "beq    :\n"); break;
+      case 0b1000001: fprintf(rdout, "beqi   :\n"); break;
+      case 0b1000010: fprintf(rdout, "blt    :\n"); break;
+      case 0b1000011: fprintf(rdout, "blti   :\n"); break;
+      case 0b1000100: fprintf(rdout, "bfeq   :\n"); break;
+      case 0b1000101: fprintf(rdout, "bfeqi  :\n"); break;
+      case 0b1000110: fprintf(rdout, "bflt   :\n"); break;
+      case 0b1000111: fprintf(rdout, "bflti  :\n"); break;
+      case 0b1100000: fprintf(rdout, "load   : ");
+	fprintf(rdout,"r%02d <- ", rgs[0]);
+	p_binary(irg[rgs[0]].u, rdout);
+	break;
+      case 0b1100010: fprintf(rdout, "store  :\n"); break;
+      case 0b1100100: fprintf(rdout, "fload  : ");
+	fprintf(rdout,"f%02d <- ", rgs[0]);
+	p_binary(frg[rgs[0]].u, rdout);
+	break;
+      case 0b1100110: fprintf(rdout, "fstore :\n"); break;
+      case 0b1101000: fprintf(rdout, "loadr  : ");
+	fprintf(rdout,"r%02d <- ", rgs[0]);
+	p_binary(irg[rgs[0]].u, rdout);
+	break;
+      case 0b1101010: fprintf(rdout, "storer :\n"); break;
+      case 0b1101100: fprintf(rdout, "floadr : ");
+	fprintf(rdout,"f%02d <- ", rgs[0]);
+	p_binary(frg[rgs[0]].u, rdout);
+	break;
+      case 0b1101110: fprintf(rdout, "fstorer:\n"); break;
+      case 0b1110000: fprintf(rdout, "read   :\n"); break;
+      case 0b1110001: fprintf(rdout, "write  :\n"); break;
+      default:        fprintf(rdout, "invalid:\n"); break;
+      }
+      switch(cutoutOp(op,0,1)){
+      case 0b00:
+	fprintf(rdout,"r%02d <- ", rgs[0]);
+	p_binary(irg[rgs[0]].u, rdout);
+	break;
+      case 0b01:
+	fprintf(rdout,"f%02d <- ", rgs[0]);
+	p_binary(frg[rgs[0]].u, rdout);
+	break;
+      }
+
+   }
+    // rgdump end ----
 
     //---- end
     if(irg[15].i == oldPC){ irg[15].i = nextPC; }
@@ -554,6 +641,9 @@ int main(int argc, char*argv[]){
   }
   if(optflgs[4]){ // exist debug input
     fclose(input);
+  }
+  if(optflgs[8]){ // exist debug input
+    fclose(rdout);
   }
   //
   fclose(fp);

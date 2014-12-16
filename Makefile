@@ -24,7 +24,7 @@ ${TARGET}: ${OBJS}
 
 
 clean:
-	make -C ${FPU_PATH} full_clean
 	rm ${TARGET} *.o
+#make -C ${FPU_PATH} full_clean
 
 .PHONY: all clean

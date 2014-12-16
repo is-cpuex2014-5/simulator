@@ -32,8 +32,15 @@ FPUをnative(cの方)で実行する。
 ./disassembled.txtにアセンブリ化したのを吐いて終了する。
 他のオプションは無視する。
 
+-r | regdump
+ALU、FPU、load命令について、出力先レジスタと演算結果を吐く
+出力先のデフォルトはstderr、オプションで指定可能(ex. -r=hoge.txt)
+
 
 更新履歴：
+12/16/15:00/ regdump
+reg_dumpを実装。
+
 12/02/14:00/disassembler
 option disassemblを実装
 それに伴ってprint_opが仕様変更されてる

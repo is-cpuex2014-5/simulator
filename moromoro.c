@@ -46,12 +46,12 @@ int utoi(uint32_t u, int digit){
 }
 
 //-- print uint32_t in binary
-int p_binary(uint32_t b,int digit){
+int p_binary(uint32_t b, FILE*fp){
   int i;
-  for(i=digit-1;i>=0;i--){
-    fprintf(stderr, "%d", (b>>i) & 1);
+  for(i=31;i>=0;i--){
+    fprintf(fp, "%d", (b>>i) & 1);
   }
-  fprintf(stderr, "\n");
+  fprintf(fp, "\n");
   return 0;
 }
 int p_hexadecimal(uint32_t b){
@@ -60,7 +60,8 @@ int p_hexadecimal(uint32_t b){
 }
 
 //-- print opration in assembli
-void print_op(uint32_t op, char*st){
+void print_op(uint32_t op){
+  char st[100];
   disassembl(op,st);
   fprintf(stderr, "%s", st);
   return;
@@ -256,7 +257,7 @@ void disassembl(uint32_t op, char*st){
     break;
   default:
     sprintf(st, "invalid op: ");
-    p_binary(op,32);
+    p_binary(op,stderr);
     //p_hexadecimal(op);
     break;
   }
