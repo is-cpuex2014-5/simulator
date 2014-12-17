@@ -25,19 +25,22 @@ FPUをnative(cの方)で実行する。
 -d=fileのようにすることで入力をfileから取る。
 コマンドはヘルプ(debugger.txt)参照
 
-・--prとか-prとか--pとかも認識する（これは全てprintinfoになる）。
-・-cpdなどとまとめられる（各オプション1文字）。
-
 -a | --disassembl
-./disassembled.txtにアセンブリ化したのを吐いて終了する。
-他のオプションは無視する。
+./disassembled.txtにアセンブリ化したのを吐く。
+デフォルトはそのまま終了、オプションに何か（なんでも）をつけると実行を続ける。(ex. -a=*)
 
 -r | regdump
 ALU、FPU、load命令について、出力先レジスタと演算結果を吐く
 出力先のデフォルトはstderr、オプションで指定可能(ex. -r=hoge.txt)
 
+・--prとか-prとか--pとかも認識する（これは全てprintinfoになる）。
+・-cpdなどとまとめられる（各オプション1文字）。
+
 
 更新履歴：
+12/18/01:00/fix disass
+-dis-assemblオプションをfix。
+
 12/16/15:00/ regdump
 reg_dumpを実装。
 

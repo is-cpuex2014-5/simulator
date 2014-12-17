@@ -177,8 +177,7 @@ int main(int argc, char*argv[]){
     i=0;
     while((op=memory[i]) != 0x8001e000){
       fprintf(fasm, "%05d: ", i*4);
-      disassembl(op, tmp_s);
-      fprintf(fasm, "%s", tmp_s);      
+      disassembl(op, fasm);
       i++;
     }
     fprintf(fasm,"%05d: beq\tr0\tr0\tr15\t0\n", i*4);

@@ -61,13 +61,11 @@ int p_hexadecimal(uint32_t b){
 
 //-- print opration in assembli
 void print_op(uint32_t op){
-  char st[100];
-  disassembl(op,st);
-  fprintf(stderr, "%s", st);
+  disassembl(op,stderr);
   return;
 }
 
-void disassembl(uint32_t op, char*st){
+void disassembl(uint32_t op, FILE*fp){
   uint32_t rgs[3];
   uint32_t option=0;
   uint32_t lr;
@@ -75,190 +73,189 @@ void disassembl(uint32_t op, char*st){
     //--- ALU
   case 0b0000000: //add
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "add\tr%d\tr%d\tr%d\t%d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+    fprintf(fp, "add\tr%d\tr%d\tr%d\t%d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
     break;
   case 0b0000001: //addi
     cutoffOp(op,rgs,&option,2);
     if(((op>>16)&1) == 0)
-      sprintf(st, "addil\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,16));
+      fprintf(fp, "addil\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,16));
     else
-      sprintf(st, "addih\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,16));
+      fprintf(fp, "addih\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,16));
     break;
   case 0b0000010: //sub
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "sub\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]); 
+    fprintf(fp, "sub\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]); 
     break;
   case 0b0000011: //subi
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "subi\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(fp, "subi\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b0000100: //not
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "not\tr%d\tr%d\n",rgs[0],rgs[1]);
+    fprintf(fp, "not\tr%d\tr%d\n",rgs[0],rgs[1]);
     break;
   case 0b0000110: //and
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "and\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "and\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0001000: //or
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "or\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "or\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0001010: //xor
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "xor\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "xor\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0001100: //nand
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "nand\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "nand\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0001110: //nor
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "nor\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "nor\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0010000: //shift
     cutoffOp(op,rgs,&option,3);
     lr = cutoutOp(op,24,24);
     if(cutoutOp(op,25,26)==0){
-      if(lr){ sprintf(st, "sra\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
-      else  { sprintf(st, "sla\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
+      if(lr){ fprintf(fp, "sra\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]); }
+      else  { fprintf(fp, "sla\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]); }
     } else if(cutoutOp(op,25,26)==1){
-      if(lr){ sprintf(st, "srl\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
-      else  { sprintf(st, "sll\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
+      if(lr){ fprintf(fp, "srl\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]); }
+      else  { fprintf(fp, "sll\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]); }
     } else {
-      if(lr){ sprintf(st, "srr\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
-      else  { sprintf(st, "slr\tr%d\tr%d\tr%d",rgs[0],rgs[1],rgs[2]); }
+      if(lr){ fprintf(fp, "srr\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]); }
+      else  { fprintf(fp, "slr\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]); }
     }
     break;
   case 0b0010001: //shifti
     cutoffOp(op,rgs,&option,3);
     lr = cutoutOp(op,24,24);
     if(cutoutOp(op,25,26)==0){
-      if(lr){ sprintf(st, "srai\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
-      else  { sprintf(st, "slai\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
+      if(lr){ fprintf(fp, "srai\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
+      else  { fprintf(fp, "slai\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
     } else if(cutoutOp(op,25,26)==1){
-      if(lr){ sprintf(st, "srli\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
-      else  { sprintf(st, "slli\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
+      if(lr){ fprintf(fp, "srli\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
+      else  { fprintf(fp, "slli\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
     } else {
-      if(lr){ sprintf(st, "srri\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
-      else  { sprintf(st, "slri\tr%d\tr%d\t%d",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
+      if(lr){ fprintf(fp, "srri\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
+      else  { fprintf(fp, "slri\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(cutoutOp(op,19,23),6)); }
     }
     break;
     //--- FLU
   case 0b0100000: //fadd
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "fadd\tf%d\tf%d\tf%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "fadd\tf%d\tf%d\tf%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0100010: //fsub
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "fsub\tf%d\tf%d\tf%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "fsub\tf%d\tf%d\tf%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0100100: //fmul
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "fmul\tf%d\tf%d\tf%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "fmul\tf%d\tf%d\tf%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0100110: //fdiv
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "fdiv\tf%d\tf%d\tf%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "fdiv\tf%d\tf%d\tf%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b0101000: //fsqrt
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "fsqrt\tf%d\tf%d\n",rgs[0],rgs[1]);
+    fprintf(fp, "fsqrt\tf%d\tf%d\n",rgs[0],rgs[1]);
     break;
   case 0b0101010: //ftoi
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "ftoi\tr%d\tf%d\n",rgs[0],rgs[1]);
+    fprintf(fp, "ftoi\tr%d\tf%d\n",rgs[0],rgs[1]);
     break;
   case 0b0101100: //itof
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "itof\tf%d\tr%d\n",rgs[0],rgs[1]);
+    fprintf(fp, "itof\tf%d\tr%d\n",rgs[0],rgs[1]);
     break;
   case 0b0101110: //fneg
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "fadd\tf%d\tf%d\n",rgs[0],rgs[1]);
+    fprintf(fp, "fadd\tf%d\tf%d\n",rgs[0],rgs[1]);
     break;
   case 0b0110000: //finv
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "finv\tf%d\tf%d\n",rgs[0],rgs[1]);
+    fprintf(fp, "finv\tf%d\tf%d\n",rgs[0],rgs[1]);
     break;
     //--- branch
   case 0b1000000: //beq
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "beq\tr%d\tr%d\tr%d\t%d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+    fprintf(fp, "beq\tr%d\tr%d\tr%d\t%d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
     break;
   case 0b1000001: //beqi
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "beqi\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(fp, "beqi\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1000010: //blt
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "blt\tr%d\tr%d\tr%d\t%d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+    fprintf(fp, "blt\tr%d\tr%d\tr%d\t%d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
     break;
   case 0b1000011: //blti
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "blti\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(fp, "blti\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1000100: //bfeq
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "bfeq\tf%d\tf%d\tr%d\t%d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+    fprintf(fp, "bfeq\tf%d\tf%d\tr%d\t%d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
     break;
   case 0b1000101: //bfeqi
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "bfeqi\tf%d\tf%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(fp, "bfeqi\tf%d\tf%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1000110: //bflt
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "bflt\tf%d\tf%d\tr%d\t%d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
+    fprintf(fp, "bflt\tf%d\tf%d\tr%d\t%d\n",rgs[0],rgs[1],rgs[2],utoi(option,13));
     break;
   case 0b1000111: //bflti
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "bflti\tf%d\tf%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(fp, "bflti\tf%d\tf%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
     break;
     //---- system
   case 0b1100000: //load
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "load\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(fp, "load\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1100010: //store
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "store\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(fp, "store\tr%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1100100: //fload
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "fload\tf%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(fp, "fload\tf%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1100110: //fstore
     cutoffOp(op,rgs,&option,2);
-    sprintf(st, "fstore\tf%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
+    fprintf(fp, "fstore\tf%d\tr%d\t%d\n",rgs[0],rgs[1],utoi(option,17));
     break;
   case 0b1101000: //loadr
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "loadr\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "loadr\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b1101010: //storer
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "storer\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "storer\tr%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b1101100: //floadr
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "floadr\tf%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "floadr\tf%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b1101110: //fstorer
     cutoffOp(op,rgs,&option,3);
-    sprintf(st, "fstorer\tf%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
+    fprintf(fp, "fstorer\tf%d\tr%d\tr%d\n",rgs[0],rgs[1],rgs[2]);
     break;
   case 0b1110000: //read
     cutoffOp(op,rgs,&option,1);
-    sprintf(st, "read\tr%d\n",rgs[0]);
+    fprintf(fp, "read\tr%d\n",rgs[0]);
     break;
   case 0b1110001: //write
     cutoffOp(op,rgs,&option,1);
-    sprintf(st, "write\tr%d\n",rgs[0]);
+    fprintf(fp, "write\tr%d\n",rgs[0]);
     break;
   default:
-    sprintf(st, "invalid op: ");
-    p_binary(op,stderr);
-    //p_hexadecimal(op);
+    fprintf(fp, "invalid op: ");
+    p_binary(op,fp);
     break;
   }
   return;
