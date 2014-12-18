@@ -9,10 +9,10 @@
 #include "moromoro.h"
 #include "fpu.h"
 
-#define MEM_SIZE  300000 // actually what?
+#define MEM_SIZE  900000 // actually what?
 #define INIT_PC   0
-#define INIT_SP  (MEM_SIZE   / 3)
-#define INIT_HP  (MEM_SIZE*2 / 3)
+#define INIT_SP  (MEM_SIZE*4*2 / 3)
+#define INIT_HP  (MEM_SIZE*4   / 3)
 //#define HALT 0x8001e000
 
 
@@ -54,7 +54,6 @@ int main(int argc, char*argv[]){
 
   //
   int tmp;
-  char tmp_s[100];
 
   //-- debug
   int ifDebug=-1;
@@ -65,12 +64,16 @@ int main(int argc, char*argv[]){
   char*buf2;
 
   //-- options
-  //---- 0:print rg, 1:print total exec, 2:count op,
+  //---- 0:print rg, 1:other info, 2:count op,
   //---- 3:native FPU, 4:exist debug input,
   //---- 5:dis-assembl, 6:disass-continue
   //---- 7:reg_dump, 8:reg_dump_output
   int optflgs[10]={};
 
+  //-- max hp
+  int maxhp,minhp,maxsp,minsp;
+  maxhp = minhp = INIT_HP;
+  maxsp = minsp = INIT_SP;
   //-- count used ops
   long long int usedOpCounter[128]={};
   long long int execCounter=0;
@@ -98,10 +101,10 @@ int main(int argc, char*argv[]){
     {"printinfo",  no_argument,       0, 'p'},
     {"disassembl", optional_argument, 0, 'a'},
     {"regdump",    optional_argument, 0, 'r'},
-    {0,           0,                 0, 0}  // endflg
+    {0,            0,                 0,   0}// endflg
   };
   while(1){
-    c = getopt_long_only(argc,argv,"a::cd::n::pr",
+    c = getopt_long_only(argc,argv,"a::cd::n::pr::",
 			 long_options, &optionIndex);
     if(c<0){ break; }
     switch(c){
@@ -111,7 +114,7 @@ int main(int argc, char*argv[]){
       if(optarg){ optflgs[6]=1; }
       break;
     case 'c':  // countop
-      optflgs[1] = optflgs[2] = 1;
+      optflgs[2] = 1;
       break;
     case 'd':  // debug
       fprintf(stderr, "Debugmode.\n");
@@ -187,6 +190,12 @@ int main(int argc, char*argv[]){
 
   // main loop
   while(1){
+    //--- max h/s p
+    maxhp = max(maxhp, irg[13].i);
+    minhp = min(minhp, irg[13].i);
+    maxsp = max(maxsp, irg[14].i);
+    minsp = min(minsp, irg[14].i);
+
     //---- fetch
     op = memory[irg[15].i/4];
 
@@ -539,6 +548,9 @@ int main(int argc, char*argv[]){
       }
       break;
     case 0b1110001: //write
+      /* 
+      fprintf(stderr,"%lld\n",execCounter);
+      if(execCounter >10000000 ) { return 0; }*/
       cutoffOp(op,rgs,&option,1);
       fwrite(&irg[rgs[0]].ch[0], sizeof(char), 1, output);
       break;
@@ -632,10 +644,15 @@ int main(int argc, char*argv[]){
     for(i=1;i<16;i++){ fprintf(stderr, ", %f",frg[i].f); }
     fprintf(stderr, "]\n");
   }
-  if(optflgs[1]){ // total exec
-    fprintf(stderr, "%lld oprations\n",execCounter);
+  if(optflgs[1]){ // other infos total exec
+    fprintf(stderr, "total %lld oprations\n",execCounter);
+    fprintf(stderr, "hp max: %d\n", maxhp/4);
+    fprintf(stderr, "hp min: %d\n", minhp/4);
+    fprintf(stderr, "sp max: %d\n", maxsp/4);
+    fprintf(stderr, "sp min: %d\n", minsp/4);
   }
   if(optflgs[2]){ // count op
+    fprintf(stderr, "total %lld oprations\n",execCounter);
     print_countOp(usedOpCounter);
   }
   if(optflgs[4]){ // exist debug input
