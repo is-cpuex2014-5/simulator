@@ -179,11 +179,11 @@ int main(int argc, char*argv[]){
     }
     i=0;
     while((op=memory[i]) != 0x8001e000){
-      fprintf(fasm, "%05d: ", i*4);
+      fprintf(fasm, "%05d: ", i);
       disassembl(op, fasm);
       i++;
     }
-    fprintf(fasm,"%05d: beq\tr0\tr0\tr15\t0\n", i*4);
+    fprintf(fasm,"%05d: beq\tr0\tr0\tr15\t0\n", i);
     if(!optflgs[6]){ return 0; } //continue?
   }
   // dis-assembl end ----
@@ -197,7 +197,7 @@ int main(int argc, char*argv[]){
     minsp = min(minsp, irg[14].i);
 
     //---- fetch
-    op = memory[irg[15].i/4];
+    op = memory[irg[15].i];
 
     //---- debug
     breakflg=0;
@@ -256,9 +256,9 @@ int main(int argc, char*argv[]){
 	buf2 = strtok(NULL," \n");
 	if(buf2==NULL){ tmp=5; }
 	else { tmp = max(5,atoi(buf2)); }
-	for(i=max(INIT_PC,irg[15].i-tmp*4);i<=min(INIT_HP,irg[15].i+tmp*4);i+=4){
+	for(i=max(INIT_PC,irg[15].i-tmp);i<=min(INIT_HP,irg[15].i+tmp);i++){
 	  fprintf(stderr, "%05d: ",i);
-	  print_op(memory[i/4]);
+	  print_op(memory[i]);
 	}
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
@@ -302,13 +302,13 @@ int main(int argc, char*argv[]){
 
     // end with halt(beq r0 r0 r15 0)
     if(op == 0x8001e000){ break; }
-    
+
     //-- countOp
     usedOpCounter[cutoutOp(op,0,6)]++;
     execCounter++;
-    
+
     //---- decode & exec
-    nextPC = irg[15].i + 4;
+    nextPC = irg[15].i + 1;
     oldPC  = irg[15].i;
 
     switch (cutoutOp(op,0,6)) { //0-6:opcode
@@ -510,35 +510,35 @@ int main(int argc, char*argv[]){
       //---- system
     case 0b1100000: //load
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))/4];
+      irg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))];
       break;
     case 0b1100010: //store
       cutoffOp(op,rgs,&option,2);
-      memory[(irg[rgs[1]].i + utoi(option,17))/4] = irg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + utoi(option,17))] = irg[rgs[0]].u;
       break;
     case 0b1100100: //fload
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))/4];
+      frg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))];
       break;
     case 0b1100110: //fstore
       cutoffOp(op,rgs,&option,2);
-      memory[(irg[rgs[1]].i + utoi(option,17))/4] = frg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + utoi(option,17))] = frg[rgs[0]].u;
       break;
     case 0b1101000: //loadr
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];
+      irg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)];
       break;
     case 0b1101010: //storer
       cutoffOp(op,rgs,&option,3);
-      memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4] = irg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + irg[rgs[2]].i)] = irg[rgs[0]].u;
       break;
     case 0b1101100: //floadr
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4];
+      frg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)];
       break;
     case 0b1101110: //fstorer
       cutoffOp(op,rgs,&option,3);
-      memory[(irg[rgs[1]].i + irg[rgs[2]].i)/4] = frg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + irg[rgs[2]].i)] = frg[rgs[0]].u;
       break;
     case 0b1110000: //read
       cutoffOp(op,rgs,&option,1);
@@ -646,10 +646,10 @@ int main(int argc, char*argv[]){
   }
   if(optflgs[1]){ // other infos total exec
     fprintf(stderr, "total %lld oprations\n",execCounter);
-    fprintf(stderr, "hp max: %d\n", maxhp/4);
-    fprintf(stderr, "hp min: %d\n", minhp/4);
-    fprintf(stderr, "sp max: %d\n", maxsp/4);
-    fprintf(stderr, "sp min: %d\n", minsp/4);
+    fprintf(stderr, "hp max: %d\n", maxhp);
+    fprintf(stderr, "hp min: %d\n", minhp);
+    fprintf(stderr, "sp max: %d\n", maxsp);
+    fprintf(stderr, "sp min: %d\n", minsp);
   }
   if(optflgs[2]){ // count op
     fprintf(stderr, "total %lld oprations\n",execCounter);
