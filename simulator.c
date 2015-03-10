@@ -176,6 +176,7 @@ int main(int argc, char*argv[]){
   }
   // option check end ----
 
+
   // dis-assembl
   if(optflgs[5]){
     FILE*fasm;
@@ -185,14 +186,15 @@ int main(int argc, char*argv[]){
     }
     i=0;
     while((op=memory[i]) != 0x8001e000){ // halt
-      fprintf(fasm, "%05d: ", i);
+      fprintf(fasm, "%05d: ", i*4);
       disassembl(op, fasm);
       i++;
     }
-    fprintf(fasm,"%05d: beq\tr0\tr0\tr15\t0\n", i);
+    fprintf(fasm,"%05d: beq\tr0\tr0\tr15\t0\n", i*4);
     if(!optflgs[6]){ return 0; } //continue?
   }
   // dis-assembl end ----
+
 
   // main loop
   while(1){
@@ -204,7 +206,6 @@ int main(int argc, char*argv[]){
 
     //---- fetch
     op = memory[irg[15].i /instdiff];;
-    fprintf(stderr, "%d\n", irg[15].i);
 
     //---- debug
     breakflg=0;
@@ -317,7 +318,7 @@ int main(int argc, char*argv[]){
     execCounter++;
 
     //---- decode & exec
-    nextPC = irg[15].i += instdiff;
+    nextPC = irg[15].i + instdiff;
     oldPC  = irg[15].i;
 
     switch (cutoutOp(op,0,6)) { //0-6:opcode
@@ -656,10 +657,10 @@ int main(int argc, char*argv[]){
   }
   if(optflgs[1]){ // other infos total exec
     fprintf(stderr, "total %lld oprations\n",execCounter);
-    fprintf(stderr, "hp max: %d\n", maxhp);
-    fprintf(stderr, "hp min: %d\n", minhp);
-    fprintf(stderr, "sp max: %d\n", maxsp);
-    fprintf(stderr, "sp min: %d\n", minsp);
+    fprintf(stderr, "hp max: %d\n", maxhp /instdiff);
+    fprintf(stderr, "hp min: %d\n", minhp /instdiff);
+    fprintf(stderr, "sp max: %d\n", maxsp /instdiff);
+    fprintf(stderr, "sp min: %d\n", minsp /instdiff);
   }
   if(optflgs[2]){ // count op
     fprintf(stderr, "total %lld oprations\n",execCounter);
