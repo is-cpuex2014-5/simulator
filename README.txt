@@ -30,9 +30,12 @@ FPUユニットを使用せずに実行する。
 ./disassembled.txtにアセンブリ化したのを吐く。
 デフォルトはそのまま終了、オプションに何か（なんでも）をつけると実行を続ける。(ex. -a=hoge)
 
--r | --regdump
+-r | --registerdump
 ALU、FPU、load命令について、出力先レジスタと演算結果を吐く
 出力先のデフォルトはstderr、オプションで指定可能(ex. -r=hoge.txt)
+
+-w | --wordaddressing
+ワードアドレッシングモードで実行
 
 ・--prとか-prとか--pとかも認識する（これは全てprintinfoになる）。
 ・-cpdなどとまとめられる（各オプション1文字）。
