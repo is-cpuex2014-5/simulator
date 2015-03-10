@@ -29,7 +29,7 @@ uint32_t memory[MEM_SIZE]={};
 int main(int argc, char*argv[]){
   // open&read program file
   if(argc<2){
-    fprintf(stderr, "too few args.");
+    fprintf(stderr, "too few args.\n");
     return 1;
   }
   FILE *fp;
@@ -51,6 +51,7 @@ int main(int argc, char*argv[]){
   typechanger irg[16]={}; // int register
   typechanger frg[16]={}; // float register
   FILE *input, *output;
+  int instdiff = 4;
 
   //
   int tmp;
@@ -68,6 +69,7 @@ int main(int argc, char*argv[]){
   //---- 3:native FPU, 4:exist debug input,
   //---- 5:dis-assembl, 6:disass-continue
   //---- 7:reg_dump, 8:reg_dump_output
+  //---- 9:word_addressing
   int optflgs[10]={};
 
   //-- max hp
@@ -82,7 +84,6 @@ int main(int argc, char*argv[]){
   //-- regdump
   FILE*rdout = stderr;
 
-
   // initialize
   irg[0].i  = 0;       // 0 register
   irg[13].i = INIT_HP; // heap pointer
@@ -95,16 +96,17 @@ int main(int argc, char*argv[]){
   int c;
   int optionIndex;
   static struct option long_options[]={
-    {"countop",    no_argument,       0, 'c'},
-    {"debug",      optional_argument, 0, 'd'},
-    {"nativeFPU",  optional_argument, 0, 'n'},
-    {"printinfo",  no_argument,       0, 'p'},
-    {"disassembl", optional_argument, 0, 'a'},
-    {"regdump",    optional_argument, 0, 'r'},
-    {0,            0,                 0,   0}// endflg
+    {"disassembl",       optional_argument, 0, 'a'},
+    {"countop",          no_argument,       0, 'c'},
+    {"debug",            optional_argument, 0, 'd'},
+    {"nativeFPU",        optional_argument, 0, 'n'},
+    {"printinfo",        no_argument,       0, 'p'},
+    {"registerdump",     optional_argument, 0, 'r'},
+    {"wordaddressing",   no_argument,       0, 'w'},
+    {0,            0,                 0,   0} // endflg
   };
   while(1){
-    c = getopt_long_only(argc,argv,"a::cd::n::pr::",
+    c = getopt_long_only(argc,argv,"a::cd::n::pr::w",
 			 long_options, &optionIndex);
     if(c<0){ break; }
     switch(c){
@@ -163,13 +165,17 @@ int main(int argc, char*argv[]){
 	optflgs[8]=1;
       }
       break;
+    case 'w':
+      optflgs[9] = 1;
+      instdiff = 1;
+      break;
     case '?':
       fprintf(stderr, "? unknown option: %c ?\n",c);
       break;
     }
   }
   // option check end ----
-  
+
   // dis-assembl
   if(optflgs[5]){
     FILE*fasm;
@@ -178,7 +184,7 @@ int main(int argc, char*argv[]){
       return 1;
     }
     i=0;
-    while((op=memory[i]) != 0x8001e000){
+    while((op=memory[i]) != 0x8001e000){ // halt
       fprintf(fasm, "%05d: ", i);
       disassembl(op, fasm);
       i++;
@@ -197,7 +203,8 @@ int main(int argc, char*argv[]){
     minsp = min(minsp, irg[14].i);
 
     //---- fetch
-    op = memory[irg[15].i];
+    op = memory[irg[15].i /instdiff];;
+    fprintf(stderr, "%d\n", irg[15].i);
 
     //---- debug
     breakflg=0;
@@ -254,11 +261,13 @@ int main(int argc, char*argv[]){
 	continue;
       } else if(!strcmp(buf2,"list") || !strcmp(buf2,"l")){
 	buf2 = strtok(NULL," \n");
-	if(buf2==NULL){ tmp=5; }
-	else { tmp = max(5,atoi(buf2)); }
-	for(i=max(INIT_PC,irg[15].i-tmp);i<=min(INIT_HP,irg[15].i+tmp);i++){
+	if(buf2==NULL)
+          tmp = 5 * instdiff;
+	else
+          tmp = atoi(buf2) * instdiff;
+	for(i=max(INIT_PC,irg[15].i-tmp);i<=min(INIT_HP,irg[15].i+tmp);i+=instdiff){
 	  fprintf(stderr, "%05d: ",i);
-	  print_op(memory[i]);
+          print_op(memory[i /instdiff]);
 	}
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
@@ -288,7 +297,7 @@ int main(int argc, char*argv[]){
 	ifPrintOp = 0; ifDebug = 0;
 	continue;
       } else if(!strcmp(buf2,"continue") || !strcmp(buf2,"c")){
-	fprintf(stderr, "program continue.\n");	
+	fprintf(stderr, "program continue.\n");
       } else if(!strcmp(buf2,"exit")){
 	break;
       } else {
@@ -308,7 +317,7 @@ int main(int argc, char*argv[]){
     execCounter++;
 
     //---- decode & exec
-    nextPC = irg[15].i + 1;
+    nextPC = irg[15].i += instdiff;
     oldPC  = irg[15].i;
 
     switch (cutoutOp(op,0,6)) { //0-6:opcode
@@ -477,7 +486,7 @@ int main(int argc, char*argv[]){
 	if(feq(frg[rgs[0]].u, frg[rgs[1]].u)){
 	  nextPC = utoi(option,17);
 	}
-      } else {	
+      } else {
 	if(frg[rgs[0]].f == frg[rgs[1]].f){
 	  nextPC = utoi(option,17);
 	}
@@ -510,35 +519,35 @@ int main(int argc, char*argv[]){
       //---- system
     case 0b1100000: //load
       cutoffOp(op,rgs,&option,2);
-      irg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))];
+      irg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17)) /instdiff];
       break;
     case 0b1100010: //store
       cutoffOp(op,rgs,&option,2);
-      memory[(irg[rgs[1]].i + utoi(option,17))] = irg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + utoi(option,17)) /instdiff] = irg[rgs[0]].u;
       break;
     case 0b1100100: //fload
       cutoffOp(op,rgs,&option,2);
-      frg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17))];
+      frg[rgs[0]].u = memory[(irg[rgs[1]].i + utoi(option,17)) /instdiff];
       break;
     case 0b1100110: //fstore
       cutoffOp(op,rgs,&option,2);
-      memory[(irg[rgs[1]].i + utoi(option,17))] = frg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + utoi(option,17)) /instdiff] = frg[rgs[0]].u;
       break;
     case 0b1101000: //loadr
       cutoffOp(op,rgs,&option,3);
-      irg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)];
+      irg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i) /instdiff];
       break;
     case 0b1101010: //storer
       cutoffOp(op,rgs,&option,3);
-      memory[(irg[rgs[1]].i + irg[rgs[2]].i)] = irg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + irg[rgs[2]].i) /instdiff] = irg[rgs[0]].u;
       break;
     case 0b1101100: //floadr
       cutoffOp(op,rgs,&option,3);
-      frg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i)];
+      frg[rgs[0]].u = memory[(irg[rgs[1]].i + irg[rgs[2]].i) /instdiff];
       break;
     case 0b1101110: //fstorer
       cutoffOp(op,rgs,&option,3);
-      memory[(irg[rgs[1]].i + irg[rgs[2]].i)] = frg[rgs[0]].u;
+      memory[(irg[rgs[1]].i + irg[rgs[2]].i) /instdiff] = frg[rgs[0]].u;
       break;
     case 0b1110000: //read
       cutoffOp(op,rgs,&option,1);
@@ -548,7 +557,7 @@ int main(int argc, char*argv[]){
       }
       break;
     case 0b1110001: //write
-      /* 
+      /*
       fprintf(stderr,"%lld\n",execCounter);
       if(execCounter >10000000 ) { return 0; }*/
       cutoffOp(op,rgs,&option,1);
@@ -633,9 +642,10 @@ int main(int argc, char*argv[]){
     // rgdump end ----
 
     //---- end
-    if(irg[15].i == oldPC){ irg[15].i = nextPC; }
+    if(irg[15].i == oldPC)
+      irg[15].i = nextPC;
   }
- 
+
   // print infos
   if(optflgs[0]){ // print rg
     fprintf(stderr, "irg[%d",irg[0].i);

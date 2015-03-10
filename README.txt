@@ -5,7 +5,8 @@
 2: ./simulator "実行ファイル" [option]
 
 
-オプション一覧：
+オプション一覧： (acdnprw)
+
 -p | --printinfo
 終了時にレジスタの値と命令実行数、hp,spの最大・最小値を吐く
 
@@ -13,8 +14,8 @@
 終了時に命令実行数と各命令毎の実行数を吐く
 
 -n | --nativeFPU
-FPUをnative(cの方)で実行する。
--n=[option]とすることで、各命令をFPU実行にできる。
+FPUユニットを使用せずに実行する。
+-n=[option]とすることで、指定命令をFPU実行にできる。
   options: asmdqfinvel
   a:add, s:sub, m:mul, d:div, q:sqrt,
   f:f2i, i:i2f, n:neg, v:inv, e:bfeq, l:bflt
@@ -27,9 +28,9 @@ FPUをnative(cの方)で実行する。
 
 -a | --disassembl
 ./disassembled.txtにアセンブリ化したのを吐く。
-デフォルトはそのまま終了、オプションに何か（なんでも）をつけると実行を続ける。(ex. -a=*)
+デフォルトはそのまま終了、オプションに何か（なんでも）をつけると実行を続ける。(ex. -a=hoge)
 
--r | regdump
+-r | --regdump
 ALU、FPU、load命令について、出力先レジスタと演算結果を吐く
 出力先のデフォルトはstderr、オプションで指定可能(ex. -r=hoge.txt)
 
